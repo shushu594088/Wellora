@@ -1,0 +1,10 @@
+TARGET=C:\Users\Administrator\Desktop\Wellora\app\src\main\java\com\nmy\wellora\MainActivity.kt
+BASELINE_SHA=D819A496FE3DB8C4E4F04391D496E56EDC72D74FC97B636580012FC4F7CDBE89
+MODIFIED_SHA=C13B9C5075654AAB95C77141618D8BFAE3D1756083B2B7B5B62D1106814A0B58
+ROLLBACK_SHA=D819A496FE3DB8C4E4F04391D496E56EDC72D74FC97B636580012FC4F7CDBE89
+ROLLBACK_MATCH=True
+BASELINE behavior: :app:testDebugUnitTest :app:assembleDebug -> exit 0 (template)
+MODIFIED behavior: :app:testDebugUnitTest :app:assembleDebug -> exit 0; :app:connectedDebugAndroidTest -> exit 0 (5 tests, 0 failures/errors)
+ROLLBACK behavior: restored hash matches pristine baseline -> True
+Changed symbol: WelloraApp and HomeScreen route for S01 Compose native home
+WebView/iframe/loadUrl/Html.fromHtml/android.webkit/HTML-loading scan: 0 matches

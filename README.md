@@ -2,7 +2,7 @@
 
 面向全年龄用户的健康管理与就医辅助应用，默认标准模式，可切长辈模式。重点是档案、报告校对解读与对比、咨询和科室参考、用药与家属协助。首阶段仅面向不超过 20 个成年试用账号。
 
-当前状态：2026-10-30 已完成文档方案和原型归档，应用仍为 Android Studio 空模板，无已实现的业务功能、后端或真实 API 接入。医学风险和药品校验缺少数据及审核资源，暂不作为可用能力。
+当前状态：2026-10-30 已完成文档方案、原型归档，并完成 S01 标准模式首页的原生 Jetpack Compose + Material 3 代表页；应用无已接入的业务后端或真实 API。医学风险和药品校验缺少数据及审核资源，暂不作为可用能力。其余页面等待本轮视觉确认后再实现。
 
 ## 文档导航
 
@@ -16,12 +16,15 @@
 - [P001：初始化 Git](evidence/prompts/P001.md)
 - [P002：归档 Stitch 原型](evidence/prompts/P002.md)
 - [P003：需求、架构与界面文档](evidence/prompts/P003.md)
+- [P004：S01 原生 Compose 代表页](evidence/prompts/P004.md)
 
 需求文档定义 R001–R016 与逐项验收；架构文档定义模块、数据、接口、权限和预算；界面文档映射 20 个核心画面、子流程和有效视觉规范。全部功能分 A–E 阶段验收，任务和前置条件见开发记录。现有 `MainActivity`、主题和测试均为模板内容。
 
 ## 已确认技术方案与待接入项
 
 - Android：Kotlin + Compose、ViewModel、Repository；双模式共享业务，联网为主，本地仅保护草稿、缓存和提醒。
+- Android UI：S01 代表页使用 `ui/feature/home/HomeScreen.kt`、`ui/navigation/WelloraNavigation.kt` 和 `ui/theme/`；禁止 WebView、iframe、浏览器容器和 HTML 页面加载。Stitch HTML/CSS/JS/screen.png 只作视觉参考。
+- 新增官方依赖：`androidx.compose.material:material-icons-extended`，用于本地 Compose 矢量图标（AndroidX、Apache-2.0、由 Compose BOM 2026.02.01 管理）。
 - 后端：FastAPI + SQLAlchemy + Alembic + PostgreSQL，独立 worker 使用数据库持久队列；Docker Compose 单机部署，不引入微服务。
 - 服务器：香港 Ubuntu 24、4 核 4GB、40GB、15Mbps。已有阿里云 OSS（内地具体地域待核实），暂无域名和 HTTPS。
 - 服务：DeepSeek、讯飞 OCR／普通话识别、系统 TTS；外部服务月预算目标 100 元。具体产品、模型、价格和配额待核实，未声称已联调。
