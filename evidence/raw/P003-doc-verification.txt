@@ -98,3 +98,30 @@ exit=1
 restored_tracked_hashes=96/96; new_document_files_absent=2; baseline_tree_equal=true
 
 Reopened before commit: C:\Users\Administrator\Desktop\Wellora\README.md; C:\Users\Administrator\Desktop\Wellora\docs\需求.md; C:\Users\Administrator\Desktop\Wellora\docs\架构与接口.md; C:\Users\Administrator\Desktop\Wellora\docs\界面设计.md; C:\Users\Administrator\Desktop\Wellora\docs\开发记录.md; C:\Users\Administrator\Desktop\Wellora\evidence\index.md; C:\Users\Administrator\Desktop\Wellora\evidence\prompts\P003.md; C:\Users\Administrator\Desktop\Wellora\evidence\raw\P003-doc-verification.txt
+
+Commit/push observation (recorded after the actual commit):
+commit stdout: [main b580f53] docs(project): 完善需求架构与验收文档 [P003]
+8 files changed, 480 insertions(+), 38 deletions(-)
+exit=0
+push stderr: To https://github.com/shushu594088/Wellora.git
+61d2eb6..b580f53  main -> main
+exit=0
+ls-remote stdout: b580f5381dcb5d8e2db09684f9feb127a48f0a7d refs/heads/main
+exit=0
+
+command=D:/Python312/python.exe -X utf8 C:\Users\Administrator\.codex\visualizations\2026\10\30\01a18c43-a141-7f41-82a0-e7795312cd39\wellora-p003-29_t3gtb\check_contract.py C:\Users\Administrator\Desktop\Wellora
+stdout:
+requirements=16/16
+core_screen_pairs=10/10
+DOC_CONTRACT=PASS
+stderr:
+exit=0
+
+command=D:/Python312/python.exe -X utf8 C:\Users\Administrator\.codex\visualizations\2026\10\30\01a18c43-a141-7f41-82a0-e7795312cd39\wellora-p003-29_t3gtb\check_documents.py C:\Users\Administrator\Desktop\Wellora C:\Users\Administrator\.codex\visualizations\2026\10\30\01a18c43-a141-7f41-82a0-e7795312cd39\wellora-p003-29_t3gtb
+stdout:
+local_links=65, broken=0
+requirement_ids=16/16, F_mapping=12, stages=5
+protected_tracked_files=90, prototype_files=46
+DOCUMENT_REVIEW=PASS
+stderr:
+exit=0
