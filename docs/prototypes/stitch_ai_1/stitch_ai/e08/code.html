@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,600,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"on-secondary-fixed-variant":"#3f4946","surface-container-high":"#dee9fc","on-primary-fixed":"#002018","secondary-fixed-dim":"#bec9c4","on-primary":"#ffffff","surface-tint":"#166a56","inverse-surface":"#27313f","inverse-on-surface":"#eaf1ff","secondary-fixed":"#dae5e0","on-tertiary-container":"#d4dadf","background":"#f8f9ff","tertiary-fixed-dim":"#c1c7cc","on-primary-container":"#9ce9cf","primary-fixed-dim":"#89d5bd","primary-fixed":"#a4f2d8","tertiary-fixed":"#dde3e8","primary-container":"#176b57","surface-dim":"#d0dbed","surface-container-highest":"#d9e3f6","on-surface-variant":"#3f4945","on-error":"#ffffff","surface-container-low":"#eff4ff","on-background":"#121c2a","inverse-primary":"#89d5bd","error":"#ba1a1a","outline-variant":"#bec9c3","on-secondary-container":"#5c6763","surface-container-lowest":"#ffffff","error-container":"#ffdad6","on-tertiary":"#ffffff","on-primary-fixed-variant":"#005140","on-secondary-fixed":"#141d1b","on-error-container":"#93000a","surface-variant":"#d9e3f6","on-tertiary-fixed-variant":"#41484c","secondary-container":"#dae5e0","on-secondary":"#ffffff","on-surface":"#121c2a","tertiary-container":"#596064","on-tertiary-fixed":"#161c20","secondary":"#56615d","primary":"#005141","surface-container":"#e6eeff","outline":"#6f7975","surface-bright":"#f8f9ff","surface":"#f8f9ff","tertiary":"#42484c"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"gutter":"0.75rem","space-sm":"0.5rem","space-xl":"1.25rem","margin":"1rem","space-xs":"0.25rem","space-lg":"1rem","space-md":"0.75rem"},"fontFamily":{"body-lg":["Plus Jakarta Sans"],"title-elder":["Plus Jakarta Sans"],"headline-lg":["Plus Jakarta Sans"],"body-elder":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"body-md":["Plus Jakarta Sans"],"label-sm":["Plus Jakarta Sans"],"headline-xl-elder":["Plus Jakarta Sans"],"headline-lg-elder":["Plus Jakarta Sans"]},"fontSize":{"body-lg":["16px",{"lineHeight":"22px","fontWeight":"500"}],"title-elder":["22px",{"lineHeight":"30px","fontWeight":"600"}],"headline-lg":["22px",{"lineHeight":"28px","fontWeight":"700"}],"body-elder":["17px",{"lineHeight":"26px","fontWeight":"400"}],"headline-md":["18px",{"lineHeight":"24px","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"label-sm":["12px",{"lineHeight":"16px","fontWeight":"500"}],"headline-xl-elder":["28px",{"lineHeight":"36px","fontWeight":"700"}],"headline-lg-elder":["24px",{"lineHeight":"32px","fontWeight":"700"}]}}}};</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface font-body-elder text-body-elder flex flex-col min-h-screen selection:bg-secondary-container"><header class="fixed top-0 inset-x-0 z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-20 px-space-md flex items-center justify-between gap-space-sm"><button aria-label="返回上一页" class="h-12 px-space-md min-w-[56px] flex items-center justify-center gap-space-xs rounded-xl text-primary bg-secondary-container hover:bg-secondary-fixed transition-colors active:scale-95" onclick="history.back()"><span class="material-symbols-outlined text-[28px]">arrow_back_ios_new</span><span class="font-headline-md text-headline-md">返回</span></button><h1 class="text-headline-lg-elder font-headline-lg-elder text-on-surface truncate flex-1 text-center">Department Triage</h1><div class="flex items-center justify-end min-w-[56px]"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full px-margin pt-20 pb-safe bg-surface"><div class="flex flex-col w-full pb-10">
+<!-- Status pill banner -->
+<div class="flex items-center gap-space-xs bg-surface-container-high/60 text-on-surface-variant px-space-md py-space-sm rounded-full w-fit mb-space-md shadow-sm">
+<span class="material-symbols-outlined text-[20px] text-primary" style="font-variation-settings: 'FILL' 1;">info</span>
+<span class="font-body-elder text-body-elder">示例界面 · 挂号智能导诊</span>
+</div>
+<!-- Primary Department Recommendation Big Card -->
+<section class="bg-surface-container-lowest rounded-2xl p-space-xl shadow-sm flex flex-col gap-space-lg mb-space-lg">
+<div class="flex items-center gap-space-lg">
+<!-- Stethoscope Icon Container -->
+<div class="w-16 h-16 rounded-2xl bg-secondary-container/70 flex items-center justify-center shrink-0 text-primary">
+<span class="material-symbols-outlined text-[38px]">stethoscope</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">首选推荐科室</span>
+<h2 class="font-headline-xl-elder text-headline-xl-elder text-primary leading-tight">全科医学科</h2>
+</div>
+</div>
+<!-- Brief Context Reason -->
+<div class="bg-surface-container-low/70 rounded-xl p-space-md">
+<p class="font-body-elder text-body-elder text-on-surface-variant leading-relaxed">
+        实际推荐需结合具体情况，初诊建议由全科综合筛查，精准分流后续检查。
+      </p>
+</div>
+<!-- Voice Playback Reason Button -->
+<button aria-label="听听推荐理由" class="w-full h-14 bg-surface-container-lowest text-primary rounded-xl font-headline-md text-headline-md flex items-center justify-center gap-space-sm shadow-sm active:scale-[0.98] transition-transform" id="play-reason-btn" style="box-shadow: inset 0 0 0 2px var(--tw-colors-primary, #005141);" type="button">
+<span class="material-symbols-outlined text-[26px] text-primary" id="speaker-icon">volume_up</span>
+<span id="speaker-text">听听推荐理由</span>
+</button>
+</section>
+<!-- Follow-up Clarification Card (One Question Focus) -->
+<section class="bg-surface-container-lowest rounded-2xl p-space-xl shadow-sm flex flex-col gap-space-md mb-space-lg">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-lg-elder text-headline-lg-elder text-on-surface">还需要了解</h3>
+<span class="bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm px-space-sm py-space-xs rounded-full">第 1/2 题</span>
+</div>
+<p class="font-title-elder text-title-elder text-on-surface-variant font-semibold">
+      哪里不舒服？持续多久了？
+    </p>
+<!-- Voice Input Big Trigger -->
+<button aria-label="按住说话补充情况" class="w-full h-[76px] bg-secondary-container/90 hover:bg-secondary-container rounded-2xl flex items-center justify-center gap-space-md text-primary active:scale-[0.98] transition-all relative overflow-hidden" id="voice-record-btn" type="button">
+<div class="w-12 h-12 rounded-full bg-surface-container-lowest flex items-center justify-center shadow-sm text-primary">
+<span class="material-symbols-outlined text-[30px]" id="mic-icon" style="font-variation-settings: 'FILL' 1;">mic</span>
+</div>
+<span class="font-headline-md text-headline-md font-bold tracking-wide" id="mic-text">说话补充情况</span>
+<div class="hidden absolute right-4 flex items-center gap-1" id="mic-wave">
+<span class="w-1 h-4 bg-primary rounded-full animate-bounce"></span>
+<span class="w-1 h-7 bg-primary rounded-full animate-bounce [animation-delay:0.15s]"></span>
+<span class="w-1 h-3 bg-primary rounded-full animate-bounce [animation-delay:0.3s]"></span>
+</div>
+</button>
+</section>
+<!-- Doctor Guide Desk Reminder Pill -->
+<div class="flex items-start gap-space-xs bg-surface-container-low px-space-md py-space-sm rounded-xl mb-space-xl text-on-surface-variant">
+<span class="material-symbols-outlined text-[22px] text-primary shrink-0 mt-0.5" style="font-variation-settings: 'FILL' 1;">help</span>
+<span class="font-body-elder text-body-elder leading-snug">
+      不同医院科室设置可能略有差异，到院后也可向一楼导诊台出示本建议。
+    </span>
+</div>
+<!-- Bottom Action Buttons Group -->
+<div class="flex flex-col gap-space-md w-full">
+<!-- Primary CTA: Generate Consultation Summary -->
+<button class="w-full h-[62px] bg-primary text-on-primary rounded-xl font-headline-md text-headline-md font-bold flex items-center justify-center gap-space-sm shadow-md active:opacity-90 active:scale-[0.99] transition-transform" id="btn-summary" type="button">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">assignment</span>
+<span>准备就诊摘要</span>
+</button>
+<!-- Secondary CTA: Return to Consultation -->
+<button class="w-full h-14 bg-surface-container-lowest text-primary rounded-xl font-headline-md text-headline-md font-semibold flex items-center justify-center gap-space-xs active:scale-[0.99] transition-transform" id="btn-back" onclick="history.back()" style="box-shadow: inset 0 0 0 2px var(--tw-colors-primary, #005141);" type="button">
+<span class="material-symbols-outlined text-[24px]">chevron_left</span>
+<span>返回咨询</span>
+</button>
+</div>
+</div>
+<script>
+  (function() {
+    const playBtn = document.getElementById('play-reason-btn');
+    const speakerText = document.getElementById('speaker-text');
+    const speakerIcon = document.getElementById('speaker-icon');
+    let isPlaying = false;
+
+    if (playBtn) {
+      playBtn.addEventListener('click', () => {
+        isPlaying = !isPlaying;
+        if (isPlaying) {
+          speakerText.textContent = '正在播放语音讲解...';
+          speakerIcon.textContent = 'pause_circle';
+          setTimeout(() => {
+            isPlaying = false;
+            speakerText.textContent = '听听推荐理由';
+            speakerIcon.textContent = 'volume_up';
+          }, 3500);
+        } else {
+          speakerText.textContent = '听听推荐理由';
+          speakerIcon.textContent = 'volume_up';
+        }
+      });
+    }
+
+    const micBtn = document.getElementById('voice-record-btn');
+    const micText = document.getElementById('mic-text');
+    const micWave = document.getElementById('mic-wave');
+    let isRecording = false;
+
+    if (micBtn) {
+      micBtn.addEventListener('click', () => {
+        isRecording = !isRecording;
+        if (isRecording) {
+          micText.textContent = '正在倾听，请说话...';
+          micWave.classList.remove('hidden');
+          setTimeout(() => {
+            isRecording = false;
+            micText.textContent = '补充完成：胸闷2天';
+            micWave.classList.add('hidden');
+          }, 3000);
+        } else {
+          micText.textContent = '说话补充情况';
+          micWave.classList.add('hidden');
+        }
+      });
+    }
+
+    const summaryBtn = document.getElementById('btn-summary');
+    if (summaryBtn) {
+      summaryBtn.addEventListener('click', () => {
+        summaryBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[26px]">progress_activity</span><span>正在生成病历摘要...</span>';
+        setTimeout(() => {
+          summaryBtn.innerHTML = '<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: \'FILL\' 1;">check_circle</span><span>就诊摘要已备好</span>';
+        }, 1200);
+      });
+    }
+  })();
+</script></main></body></html>

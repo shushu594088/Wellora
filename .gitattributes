@@ -1,0 +1,2 @@
+# Keep user-provided prototype exports byte-for-byte in Git.
+docs/prototypes/** -text

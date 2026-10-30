@@ -1,0 +1,9 @@
+PASS D:\Edge download\stitch_ai.zip: 25/25 extracted files match SHA-256
+SOURCE_SHA256 3F6E2F139D702FB2159172AD2C5A251FC3A8E12247BB5CF64E4F952CE54EB2B8
+PASS D:\Edge download\stitch_ai (1).zip: 21/21 extracted files match SHA-256
+SOURCE_SHA256 050AD40352D6D52B3B2A5EA650DB5F751586E6DE51CF125D76CA5AD856508B58
+PASS TOTAL 46 files; PNG=25; HTML=19; DESIGN=2
+PASS 55 local Markdown links exist
+STDERR (empty)
+EXIT_STATUS 0
+PASS Git index: 46/46 prototype blobs preserve original file bytes

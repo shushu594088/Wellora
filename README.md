@@ -5,11 +5,16 @@ Android Studio 创建的空项目模板（用户于 2026-10-30 确认），尚�
 ## 文档导航
 
 - [开发规则](AGENTS.md)
+- [需求](docs/需求.md)
+- [架构与接口](docs/架构与接口.md)
+- [界面设计与原型索引](docs/界面设计.md)
+- [原型资源](docs/prototypes/)
 - [开发记录](docs/开发记录.md)
 - [Prompt 证据索引](evidence/index.md)
 - [P001：初始化 Git](evidence/prompts/P001.md)
+- [P002：归档 Stitch 原型](evidence/prompts/P002.md)
 
-需求、架构与接口、界面设计文档及原型索引在功能开发前补齐。现有 `MainActivity` 为 Compose 的 `Hello Android!` 示例，主题和测试均为模板内容，不作为核心功能成果。
+已归档用户提供的两个 Stitch 原型包，来源、页面对应表和校验结果见界面设计文档。当前需求与架构文档仅确定原型归档范围，业务规则和接口在功能开发前确认。现有 `MainActivity` 为 Compose 的 `Hello Android!` 示例，主题和测试均为模板内容，不作为核心功能成果。
 
 ## 模板环境与命令
 

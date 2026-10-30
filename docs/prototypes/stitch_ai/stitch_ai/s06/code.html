@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "tertiary-fixed-dim": "#c1c7cc", "primary-container": "#176b57", "error-container": "#ffdad6", "primary-fixed-dim": "#89d5bd", "outline-variant": "#bec9c3", "secondary-container": "#dae5e0", "inverse-on-surface": "#eaf1ff", "primary-fixed": "#a4f2d8", "on-primary": "#ffffff", "surface-container-lowest": "#ffffff", "on-background": "#121c2a", "primary": "#005141", "on-secondary-container": "#5c6763", "surface": "#f8f9ff", "on-tertiary-fixed": "#161c20", "on-tertiary": "#ffffff", "on-error": "#ffffff", "surface-container-low": "#eff4ff", "on-surface-variant": "#3f4945", "on-primary-container": "#9ce9cf", "surface-dim": "#d0dbed", "surface-container-highest": "#d9e3f6", "on-error-container": "#93000a", "on-primary-fixed": "#002018", "background": "#f8f9ff", "on-primary-fixed-variant": "#005140", "surface-container": "#e6eeff", "surface-bright": "#f8f9ff", "error": "#ba1a1a", "on-secondary": "#ffffff", "tertiary": "#42484c", "inverse-surface": "#27313f", "surface-variant": "#d9e3f6", "inverse-primary": "#89d5bd", "on-tertiary-container": "#d4dadf", "tertiary-fixed": "#dde3e8", "on-secondary-fixed-variant": "#3f4946", "secondary": "#56615d", "on-secondary-fixed": "#141d1b", "on-tertiary-fixed-variant": "#41484c", "outline": "#6f7975", "on-surface": "#121c2a", "surface-container-high": "#dee9fc", "surface-tint": "#166a56", "tertiary-container": "#596064", "secondary-fixed-dim": "#bec9c4", "secondary-fixed": "#dae5e0" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-sm": "0.5rem", "space-xl": "1.25rem", "space-lg": "1rem", "gutter": "0.75rem", "space-xs": "0.25rem", "margin": "1rem", "space-md": "0.75rem" }, fontFamily: { "body-md": ["Plus Jakarta Sans"], "body-elder": ["Plus Jakarta Sans"], "title-elder": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "headline-lg-elder": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "headline-xl-elder": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"] }, fontSize: { "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "body-elder": ["17px", { "lineHeight": "26px", "fontWeight": "400" }], "title-elder": ["22px", { "lineHeight": "30px", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "22px", "fontWeight": "500" }], "headline-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }], "headline-lg-elder": ["24px", { "lineHeight": "32px", "fontWeight": "700" }], "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }], "headline-xl-elder": ["28px", { "lineHeight": "36px", "fontWeight": "700" }], "headline-lg": ["22px", { "lineHeight": "28px", "fontWeight": "700" }] } } } };</script><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-16 px-space-sm flex items-center justify-between"><div class="flex items-center gap-space-xs"><button class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container-high transition-colors" onclick="history.back()"><span class="material-symbols-outlined text-[22px]">arrow_back_ios_new</span></button><h1 class="font-headline-md text-headline-md text-on-surface tracking-tight">Ai Consultation Session</h1></div><div class="flex items-center gap-space-xs pr-space-xs"><button class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[22px]">share</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex flex-col relative w-full pt-16 pb-safe bg-surface min-h-screen"><div class="flex flex-col w-full pb-8">
+<!-- Content Container with Standard Mode Margin -->
+<div class="flex flex-col px-margin gap-space-md">
+<!-- Top Report Selection Switcher Card -->
+<div class="w-full bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div class="flex items-center justify-between gap-space-xs">
+<!-- Current Report (本次) -->
+<button class="flex-1 flex flex-col items-start p-space-xs rounded-lg active:bg-surface-container-low transition-colors text-left group" type="button">
+<span class="font-label-sm text-label-sm text-secondary">本次</span>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="material-symbols-outlined text-primary-container text-[18px]">calendar_today</span>
+<span class="font-body-lg text-body-lg text-on-surface font-semibold tracking-tight">10月28日</span>
+<span class="material-symbols-outlined text-secondary text-[16px] group-hover:translate-y-0.5 transition-transform">expand_more</span>
+</div>
+</button>
+<!-- Compare / Swap Indicator Icon -->
+<div class="w-8 h-8 rounded-full bg-secondary-container/60 flex items-center justify-center flex-shrink-0 text-on-secondary-container">
+<span class="material-symbols-outlined text-[18px]">swap_horiz</span>
+</div>
+<!-- Previous Report (上次) -->
+<button class="flex-1 flex flex-col items-start p-space-xs rounded-lg active:bg-surface-container-low transition-colors text-left group" type="button">
+<span class="font-label-sm text-label-sm text-secondary">上次</span>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="material-symbols-outlined text-primary-container text-[18px]">calendar_today</span>
+<span class="font-body-lg text-body-lg text-on-surface font-semibold tracking-tight">07月20日</span>
+<span class="material-symbols-outlined text-secondary text-[16px] group-hover:translate-y-0.5 transition-transform">expand_more</span>
+</div>
+</button>
+</div>
+</div>
+<!-- Segmented Filter Tabs -->
+<div class="w-full flex items-center justify-around bg-surface-container-lowest rounded-xl p-1 shadow-sm">
+<!-- Active Tab: 变化概览 -->
+<button class="flex-1 relative py-2.5 flex flex-col items-center justify-center text-primary font-headline-md text-headline-md font-semibold transition-all" id="tab-overview" type="button">
+<span>变化概览</span>
+<span class="absolute bottom-1 w-10 h-0.5 bg-primary rounded-full"></span>
+</button>
+<!-- Secondary Tab: 逐项查看 -->
+<button class="flex-1 relative py-2.5 flex flex-col items-center justify-center text-secondary font-headline-md text-headline-md font-medium transition-all active:text-on-surface" id="tab-detailed" type="button">
+<span>逐项查看</span>
+</button>
+</div>
+<!-- Pre-condition Verification Notice Banner -->
+<div class="w-full bg-surface-container-low rounded-xl p-space-md flex items-center justify-between text-tertiary cursor-pointer active:bg-surface-container transition-colors shadow-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary-container text-[20px]">info</span>
+<span class="font-body-md text-body-md text-tertiary font-medium">先确认单位与检测方法</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px]">arrow_forward_ios</span>
+</div>
+<!-- Indicator Comparison Section -->
+<div class="w-full bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
+<!-- Section Header with Column Labels -->
+<div class="flex items-center justify-between">
+<h3 class="font-headline-md text-headline-md text-on-surface">指标对比</h3>
+<div class="flex items-center gap-6 font-label-sm text-label-sm text-secondary pr-2">
+<span class="w-8 text-center">上次</span>
+<span class="w-8 text-center">本次</span>
+</div>
+</div>
+<!-- Comparison Rows List -->
+<div class="flex flex-col gap-space-sm">
+<!-- Row 1: 检测结果 -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary-container text-[20px]">article</span>
+<span class="font-body-md text-body-md text-on-surface">检测结果</span>
+</div>
+<div class="flex items-center gap-6 font-body-md text-body-md text-secondary pr-2">
+<span class="w-8 text-center tracking-widest text-outline">--</span>
+<span class="w-8 text-center tracking-widest text-outline">--</span>
+</div>
+</div>
+<!-- Row 2: 单位 -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary-container text-[20px]">science</span>
+<span class="font-body-md text-body-md text-on-surface">单位</span>
+</div>
+<div class="flex items-center gap-6 font-body-md text-body-md text-secondary pr-2">
+<span class="w-8 text-center tracking-widest text-outline">--</span>
+<span class="w-8 text-center tracking-widest text-outline">--</span>
+</div>
+</div>
+<!-- Row 3: 参考范围 -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary-container text-[20px]">bar_chart</span>
+<span class="font-body-md text-body-md text-on-surface">参考范围</span>
+</div>
+<div class="flex items-center gap-6 font-body-md text-body-md text-secondary pr-2">
+<span class="w-8 text-center tracking-widest text-outline">--</span>
+<span class="w-8 text-center tracking-widest text-outline">--</span>
+</div>
+</div>
+</div>
+<!-- Incomparable Status Callout Note -->
+<div class="w-full bg-surface-container-low rounded-xl p-space-md flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-primary-container text-[20px] mt-0.5 flex-shrink-0">info</span>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-semibold">暂不可直接比较</span>
+<span class="font-label-sm text-label-sm text-secondary mt-0.5">请补全单位与检测方法以启动精准换算。</span>
+</div>
+</div>
+</div>
+<!-- Metric Trend Section (指标趋势) -->
+<div class="w-full bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
+<h3 class="font-headline-md text-headline-md text-on-surface">指标趋势</h3>
+<!-- Trend Preview & Empty State Prompt -->
+<div class="w-full bg-surface rounded-xl p-space-lg flex items-center gap-space-md">
+<!-- Trend Graphic Icon Container -->
+<div class="w-14 h-12 rounded-lg bg-surface-container-low flex items-center justify-center flex-shrink-0">
+<svg class="w-9 h-7 text-primary-container" fill="none" viewbox="0 0 36 28" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 22L13 14L20 18L32 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path>
+<path d="M26 6H32V12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path>
+<line stroke="#BEC9C3" stroke-dasharray="2 2" stroke-width="1.5" x1="4" x2="32" y1="26" y2="26"></line>
+</svg>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-md text-body-md text-on-surface-variant font-medium">确认可比数据后查看变化趋势</span>
+<span class="font-label-sm text-label-sm text-secondary mt-0.5">AI 将自动生成多周期波动图线</span>
+</div>
+</div>
+<!-- Action Row: 选择其他报告 -->
+<button class="w-full flex items-center justify-between p-space-sm rounded-lg hover:bg-surface-container-low transition-colors group" type="button">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary-container text-[22px]">bar_chart</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">选择其他报告</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px] group-hover:translate-x-0.5 transition-transform">arrow_forward_ios</span>
+</button>
+</div>
+<!-- Bottom Secondary Action: 查看原始报告 -->
+<div class="w-full mt-space-xs pt-space-xs">
+<button class="w-full h-12 bg-primary-container text-on-primary rounded-xl font-headline-md text-headline-md font-semibold flex items-center justify-center gap-space-xs shadow-sm active:opacity-90 active:scale-[0.99] transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">description</span>
+<span>查看原始报告</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const tabOverview = document.getElementById('tab-overview');
+    const tabDetailed = document.getElementById('tab-detailed');
+
+    if (tabOverview && tabDetailed) {
+      tabDetailed.addEventListener('click', function() {
+        tabDetailed.classList.remove('text-secondary', 'font-medium');
+        tabDetailed.classList.add('text-primary', 'font-semibold');
+        
+        tabOverview.classList.remove('text-primary', 'font-semibold');
+        tabOverview.classList.add('text-secondary', 'font-medium');
+
+        let indicator = tabOverview.querySelector('span:last-child');
+        if (indicator) {
+          tabOverview.removeChild(indicator);
+          const newIndicator = document.createElement('span');
+          newIndicator.className = 'absolute bottom-1 w-10 h-0.5 bg-primary rounded-full';
+          tabDetailed.appendChild(newIndicator);
+        }
+      });
+
+      tabOverview.addEventListener('click', function() {
+        tabOverview.classList.remove('text-secondary', 'font-medium');
+        tabOverview.classList.add('text-primary', 'font-semibold');
+
+        tabDetailed.classList.remove('text-primary', 'font-semibold');
+        tabDetailed.classList.add('text-secondary', 'font-medium');
+
+        let indicator = tabDetailed.querySelector('span:last-child');
+        if (indicator) {
+          tabDetailed.removeChild(indicator);
+          const newIndicator = document.createElement('span');
+          newIndicator.className = 'absolute bottom-1 w-10 h-0.5 bg-primary rounded-full';
+          tabOverview.appendChild(newIndicator);
+        }
+      });
+    }
+  })();
+</script></main></body></html>
