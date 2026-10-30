@@ -1,0 +1,100 @@
+P003 DOCUMENT VERIFICATION / 2026-10-30 Asia/Shanghai
+Scope: documentation only; no application, supplier, deployment or clinical validation.
+Baseline commit: 61d2eb676bad6aac2ba831ea6e0517b8d3467428
+Original conversation export: pending user export; this log is not a transcript.
+Source documents (read-only; instructions treated as reference):
+D:\Edge download\AI健康助手_Codex项目交接文档.md
+SHA256=6db4dad037e55187f917747151f965155aa2763f1991c35657c2f0c8193d725e bytes=21296
+D:\Edge download\适老化健康助手_首版产品需求文档.md
+SHA256=9a66eee0e5750620a7d7d77ea9e4b4a0b8c251352e2b7971eb8756ff2509e02d bytes=19179
+D:\Edge download\适老化健康助手_前端设计文档.md
+SHA256=501890e1e899dd7a73887ae58b56ab721e905a02a091fb9be37a4095555bce16 bytes=36688
+
+Baseline contract check (same script/input rules as MODIFIED and ROLLBACK):
+BASELINE command: python -X utf8 check_contract.py TARGET_COPY
+input: baseline document tree
+stdout:
+requirements=1/16
+core_screen_pairs=0/10
+missing requirements: R002,R003,R004,R005,R006,R007,R008,R009,R010,R011,R012,R013,R014,R015,R016
+missing architecture contract: /api/v1
+missing architecture contract: PostgreSQL
+missing architecture contract: DeepSeek
+missing architecture contract: VERSION_CONFLICT
+missing architecture contract: BUDGET_EXCEEDED
+missing architecture contract: deletion_tombstone
+core screen mapping: expected 10 paired rows, got 0
+missing document: evidence/prompts/P003.md
+DOC_CONTRACT=FAIL
+stderr:
+exit=1
+
+Tool error: combined Delete/Add patch rejected before mutation: invalid patch: multiple operations target. Corrected by separate Delete and Add operations. Tool error has no shell exit status.
+
+Initial DOCUMENT_REVIEW: stdout included local_links=65, broken=0; protected_tracked_files=90, prototype_files=46; no technical/UI relation: R001; DOCUMENT_REVIEW=FAIL. Child exit=1; outer PowerShell ended with git diff --stat, exit=0. Corrected UI source paragraph to associate R001.
+
+command=D:/Python312/python.exe -X utf8 C:\Users\Administrator\.codex\visualizations\2026\10\30\01a18c43-a141-7f41-82a0-e7795312cd39\wellora-p003-29_t3gtb\check_contract.py C:\Users\Administrator\Desktop\Wellora
+input=modified document tree
+stdout:
+requirements=16/16
+core_screen_pairs=10/10
+DOC_CONTRACT=PASS
+stderr:
+exit=0
+
+command=D:/Python312/python.exe -X utf8 C:\Users\Administrator\.codex\visualizations\2026\10\30\01a18c43-a141-7f41-82a0-e7795312cd39\wellora-p003-29_t3gtb\check_documents.py C:\Users\Administrator\Desktop\Wellora C:\Users\Administrator\.codex\visualizations\2026\10\30\01a18c43-a141-7f41-82a0-e7795312cd39\wellora-p003-29_t3gtb
+input=modified document tree
+stdout:
+local_links=65, broken=0
+requirement_ids=16/16, F_mapping=12, stages=5
+protected_tracked_files=90, prototype_files=46
+DOCUMENT_REVIEW=PASS
+stderr:
+exit=0
+
+command=git diff --check
+stdout:
+stderr:
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/开发记录.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/架构与接口.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/界面设计.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/需求.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'evidence/index.md', LF will be replaced by CRLF the next time Git touches it
+exit=0
+
+Independent rollback copy (original working tree not rolled back):
+MODIFIED command=D:/Python312/python.exe -X utf8 C:\Users\Administrator\.codex\visualizations\2026\10\30\01a18c43-a141-7f41-82a0-e7795312cd39\wellora-p003-29_t3gtb\check_contract.py C:\Users\Administrator\.codex\visualizations\2026\10\30\01a18c43-a141-7f41-82a0-e7795312cd39\wellora-p003-29_t3gtb\rollback-check
+input=same document contract, target copy
+stdout:
+requirements=16/16
+core_screen_pairs=10/10
+DOC_CONTRACT=PASS
+stderr:
+exit=0
+ROLLBACK_SCRIPT command="C:/Program Files/Git/bin/bash.exe" C:\Users\Administrator\.codex\visualizations\2026\10\30\01a18c43-a141-7f41-82a0-e7795312cd39\wellora-p003-29_t3gtb\ROLLBACK.sh C:\Users\Administrator\.codex\visualizations\2026\10\30\01a18c43-a141-7f41-82a0-e7795312cd39\wellora-p003-29_t3gtb\rollback-check
+input=same document contract, target copy
+stdout:
+ROLLBACK_RESTORED=baseline_document_bytes
+stderr:
+exit=0
+ROLLBACK command=D:/Python312/python.exe -X utf8 C:\Users\Administrator\.codex\visualizations\2026\10\30\01a18c43-a141-7f41-82a0-e7795312cd39\wellora-p003-29_t3gtb\check_contract.py C:\Users\Administrator\.codex\visualizations\2026\10\30\01a18c43-a141-7f41-82a0-e7795312cd39\wellora-p003-29_t3gtb\rollback-check
+input=same document contract, target copy
+stdout:
+requirements=1/16
+core_screen_pairs=0/10
+missing requirements: R002,R003,R004,R005,R006,R007,R008,R009,R010,R011,R012,R013,R014,R015,R016
+missing architecture contract: /api/v1
+missing architecture contract: PostgreSQL
+missing architecture contract: DeepSeek
+missing architecture contract: VERSION_CONFLICT
+missing architecture contract: BUDGET_EXCEEDED
+missing architecture contract: deletion_tombstone
+core screen mapping: expected 10 paired rows, got 0
+missing document: evidence/prompts/P003.md
+DOC_CONTRACT=FAIL
+stderr:
+exit=1
+restored_tracked_hashes=96/96; new_document_files_absent=2; baseline_tree_equal=true
+
+Reopened before commit: C:\Users\Administrator\Desktop\Wellora\README.md; C:\Users\Administrator\Desktop\Wellora\docs\需求.md; C:\Users\Administrator\Desktop\Wellora\docs\架构与接口.md; C:\Users\Administrator\Desktop\Wellora\docs\界面设计.md; C:\Users\Administrator\Desktop\Wellora\docs\开发记录.md; C:\Users\Administrator\Desktop\Wellora\evidence\index.md; C:\Users\Administrator\Desktop\Wellora\evidence\prompts\P003.md; C:\Users\Administrator\Desktop\Wellora\evidence\raw\P003-doc-verification.txt
