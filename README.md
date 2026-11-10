@@ -2,7 +2,7 @@
 
 面向全年龄用户的健康管理与就医辅助应用，默认标准模式，可切长辈模式。重点是档案、报告校对解读与对比、咨询和科室参考、用药与家属协助。首阶段仅面向不超过 20 个成年试用账号。
 
-当前状态：2026-10-30 已完成文档方案、原型归档，并完成 S01 标准模式首页的原生 Jetpack Compose + Material 3 代表页；应用无已接入的业务后端或真实 API。医学风险和药品校验缺少数据及审核资源，暂不作为可用能力。其余页面等待本轮视觉确认后再实现。
+当前状态：2026-11-10 开始后端测试版，首轮目标为用户名密码注册登录、本人基础档案持久化及账号隔离，再接入 Android 手机测试。服务器为北京 Ubuntu Server 24.04、2 核 2GiB、40GiB、100GB 流量、峰值 2Mbit/s，公网 IP `114.116.233.113`；SSH 公钥登录和 Docker 安装已验证；后端域名选定 api.shushu520.top，用户暂不备案，先进行内部验证。不得以公网 HTTP 测试凭据或健康资料。现有 Compose 前端仍为离线虚拟数据演示；其余业务后端尚未接入。
 
 ## 文档导航
 
@@ -13,6 +13,8 @@
 - [原型资源](docs/prototypes/)
 - [开发记录](docs/开发记录.md)
 - [Prompt 证据索引](evidence/index.md)
+- [后端测试服务说明](server/README.md)
+- [P017：账号与本人档案后端测试版](evidence/prompts/P017.md)
 - [P001：初始化 Git](evidence/prompts/P001.md)
 - [P002：归档 Stitch 原型](evidence/prompts/P002.md)
 - [P003：需求、架构与界面文档](evidence/prompts/P003.md)
@@ -26,11 +28,21 @@
 - Android UI：S01 代表页使用 `ui/feature/home/HomeScreen.kt`、`ui/navigation/WelloraNavigation.kt` 和 `ui/theme/`；禁止 WebView、iframe、浏览器容器和 HTML 页面加载。Stitch HTML/CSS/JS/screen.png 只作视觉参考。
 - 新增官方依赖：`androidx.compose.material:material-icons-extended`，用于本地 Compose 矢量图标（AndroidX、Apache-2.0、由 Compose BOM 2026.02.01 管理）。
 - 后端：FastAPI + SQLAlchemy + Alembic + PostgreSQL，独立 worker 使用数据库持久队列；Docker Compose 单机部署，不引入微服务。
-- 服务器：香港 Ubuntu 24、4 核 4GB、40GB、15Mbps。已有阿里云 OSS（内地具体地域待核实），暂无域名和 HTTPS。
+- 服务器：北京 Ubuntu Server 24.04、2 核 2GiB、40GiB、100GB 流量、峰值 2Mbit/s。已有阿里云 OSS（具体地域待核实），后端域名 api.shushu520.top 尚未配置 HTTPS；暂不备案，先内部验证。
 - 服务：DeepSeek、讯飞 OCR／普通话识别、系统 TTS；外部服务月预算目标 100 元。具体产品、模型、价格和配额待核实，未声称已联调。
 - 登录：用户名密码，首版无验证码及邮件找回。删除立即封锁并清理在线数据，灾备最长 30 天，恢复不得复活已删资料。
 
-后端尚无可运行代码、容器配置和依赖清单，不能执行后端启动或部署命令。后端骨架落地时补充已验证的安装／迁移／启动／测试命令及无密钥 `.env.example`。真实健康资料公网试用前须具备 HTTPS、明确第三方处理与留存、落实恢复演练；当前只能用虚构资料联调。
+后端测试骨架位于 `server/`，依赖用 `uv.lock` 锁定。已实现注册、登录、退出和本人基础档案；已准备 PostgreSQL／FastAPI／Caddy 的生产形态测试编排，但没有在目标服务器验证。现阶段仅使用虚构资料；公网账号接口需先具备域名和 HTTPS。密码复验、改密、删除、幂等、健康记录及其他功能仍未完成，不将测试骨架用于真实健康资料。
+
+本机测试（Python 3.12、uv）：
+
+```powershell
+cd server
+uv sync --locked --group dev --default-index https://pypi.org/simple
+uv run --no-sync pytest -q
+```
+
+API 测试自行使用隔离 SQLite；手动启动服务须显式配置 `DATABASE_URL` 并运行 Alembic 迁移。生产测试使用 `server/docker-compose.yml`、私有 PostgreSQL 和 Caddy HTTPS 反代。部署步骤、域名、流量端口及未验证项见 [server/README.md](server/README.md)；禁止把测试 API 明文暴露到公网。
 
 ## 模板环境与命令
 
