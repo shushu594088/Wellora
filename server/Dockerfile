@@ -11,6 +11,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY app.py alembic.ini ./
 COPY migrations ./migrations
+COPY tests/deployment_smoke.py ./
 RUN useradd --system --uid 10001 --no-create-home wellora
 USER 10001:10001
 

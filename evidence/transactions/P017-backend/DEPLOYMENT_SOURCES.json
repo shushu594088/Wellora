@@ -1,0 +1,35 @@
+{
+  "initial_upload": {
+    ".env.example": "41a1533246e2576e7b5ae71660ca180e76f02f90e6f045cf5af3145232c91a61",
+    ".gitignore": "ed1aa85f5c492c2d3f426ec07920f075c3bfe6cd12367f823ac8bfac40524850",
+    "Caddyfile": "e127d15bf77d7adf4fbc7e20f75a2ed04fac3e99e32914aa18a9901cacb4da4f",
+    "Dockerfile": "ae3bfa122afa5229f556ef34fd2d4bb00387d6c56d23bbc4db88cc1b10ffa971",
+    "README.md": "f23d28827dcb16eb4975505b92ab76a3700ef59e3da46f97d81e09a5b09e6958",
+    "alembic.ini": "ebfad8a9c8f352d2381e48df599dd04dad764ca95b03f0dc9949d0691c6d2517",
+    "app.py": "9e7cc111aff321b94a9a432ad179f104b1d4dfbb4800ec5d03f612d1d481d7e6",
+    "docker-compose.yml": "3445d3dc5f89f2f278963055c123f57b7179dc805db81ffc34e1c6c15fcb35ff",
+    "migrations/env.py": "e15a85d01fd0c88f8b9c991147a57f25e1a48bf91bccf61cd5dd6e6540b315f2",
+    "migrations/versions/0001_accounts_profiles.py": "0c444e65091228b466b9e23299be0180da6e456a3292d34c32050983bab35618",
+    "pyproject.toml": "e0ce1931361b22250359b6d1b96b5cadc7f4d4297fa57eaa69e6d1ee6554a340",
+    "uv.lock": "61a4e7c2dde96928719f1997b784bb0916de8dd4f03c4e75eb5a8d7af902e6cd",
+    "tests/deployment_smoke.py": "da11697d384f67f4409a4d358d532cf2a4623d95be7ce9ec7757619f83204fbf"
+  },
+  "final_deployed_source_hashes": {
+    ".env.example": "41a1533246e2576e7b5ae71660ca180e76f02f90e6f045cf5af3145232c91a61",
+    ".gitignore": "ed1aa85f5c492c2d3f426ec07920f075c3bfe6cd12367f823ac8bfac40524850",
+    "Caddyfile": "e127d15bf77d7adf4fbc7e20f75a2ed04fac3e99e32914aa18a9901cacb4da4f",
+    "Dockerfile": "ae3bfa122afa5229f556ef34fd2d4bb00387d6c56d23bbc4db88cc1b10ffa971",
+    "README.md": "51d74848b4a0283ee48755852b5da57b8b21e1495ac073ac2575c44ec0c22aae",
+    "alembic.ini": "ebfad8a9c8f352d2381e48df599dd04dad764ca95b03f0dc9949d0691c6d2517",
+    "app.py": "9e7cc111aff321b94a9a432ad179f104b1d4dfbb4800ec5d03f612d1d481d7e6",
+    "docker-compose.yml": "3445d3dc5f89f2f278963055c123f57b7179dc805db81ffc34e1c6c15fcb35ff",
+    "migrations/env.py": "e15a85d01fd0c88f8b9c991147a57f25e1a48bf91bccf61cd5dd6e6540b315f2",
+    "migrations/versions/0001_accounts_profiles.py": "0c444e65091228b466b9e23299be0180da6e456a3292d34c32050983bab35618",
+    "pyproject.toml": "e0ce1931361b22250359b6d1b96b5cadc7f4d4297fa57eaa69e6d1ee6554a340",
+    "uv.lock": "61a4e7c2dde96928719f1997b784bb0916de8dd4f03c4e75eb5a8d7af902e6cd",
+    "tests/deployment_smoke.py": "fd2c5f53f15bcd16a248317c7e594b41009ad441aaf1f82dc8203a4d84c9c2e2",
+    ".dockerignore": "f91f4c6b8ca1b47bd30b8b83ba206898b4d95d5170842695d62d24904e71f490"
+  },
+  "server_root": "/opt/wellora/server",
+  "verification": "SERVER_VERIFICATION.json"
+}

@@ -1,0 +1,182 @@
+[
+  {
+    "timestamp_utc": "2026-11-10T09:56:51.217959+00:00",
+    "label": "BUILD_API",
+    "command": [
+      "ssh",
+      "-i",
+      "C:\\Users\\Administrator\\.ssh\\wellora-backend-root",
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=yes",
+      "-o",
+      "ConnectTimeout=10",
+      "root@114.116.233.113",
+      "set -eu; docker tag docker.m.daocloud.io/library/python:3.12-slim-bookworm python:3.12-slim-bookworm; cd /opt/wellora/server; docker compose build api"
+    ],
+    "stdout": "#1 [internal] load local bake definitions\n#1 reading from stdin 477B done\n#1 DONE 0.0s\n\n#2 [internal] load build definition from Dockerfile\n#2 transferring dockerfile: 644B done\n#2 DONE 0.0s\n\n#3 [internal] load metadata for docker.io/library/python:3.12-slim-bookworm\n#3 DONE 0.0s\n\n#4 [internal] load .dockerignore\n#4 transferring context: 2B done\n#4 DONE 0.0s\n\n#5 [internal] load build context\n#5 transferring context: 98.46kB done\n#5 DONE 0.0s\n\n#6 [1/9] FROM docker.io/library/python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df\n#6 resolve docker.io/library/python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df 0.0s done\n#6 DONE 0.1s\n\n#7 [2/9] WORKDIR /app\n#7 DONE 0.0s\n\n#8 [3/9] RUN pip install --no-cache-dir uv==0.12.19\n#8 2.795 Collecting uv==0.12.19\n#8 3.566   Downloading uv-0.12.19-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (11 kB)\n#8 3.690 Downloading uv-0.12.19-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (20.5 MB)\n#8 7.360    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 20.5/20.5 MB 6.1 MB/s eta 0:00:00\n#8 7.386 Installing collected packages: uv\n#8 7.629 Successfully installed uv-0.12.19\n#8 7.629 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.\n#8 8.102 \n#8 8.102 [notice] A new release of pip is available: 25.0.1 -> 26.3\n#8 8.102 [notice] To update, run: pip install --upgrade pip\n#8 DONE 8.3s\n\n#9 [4/9] COPY pyproject.toml uv.lock ./\n#9 DONE 0.0s\n\n#10 [5/9] RUN uv sync --frozen --no-dev --no-install-project\n#10 0.315 Using CPython 3.12.16 interpreter at: /usr/local/bin/python3\n#10 0.315 Creating virtual environment at: /opt/venv\n#10 0.806 Downloading psycopg-binary (5.0MiB)\n#10 0.808 Downloading sqlalchemy (4.5MiB)\n#10 0.811 Downloading pydantic-core (2.2MiB)\n#10 0.815 Downloading uvloop (4.3MiB)\n#10 12.76  Downloaded pydantic-core\n#10 17.69  Downloaded uvloop\n#10 18.40  Downloaded sqlalchemy\n#10 18.81  Downloaded psycopg-binary\n#10 18.81 Prepared 31 packages in 18.48s\n#10 18.84 Installed 31 packages in 36ms\n#10 18.84  + alembic==1.20.1\n#10 18.84  + annotated-doc==0.0.5\n#10 18.84  + annotated-types==0.8.0\n#10 18.84  + anyio==4.16.0\n#10 18.84  + argon2-cffi==25.1.0\n#10 18.84  + argon2-cffi-bindings==26.1.0\n#10 18.84  + cffi==2.1.1\n#10 18.84  + click==8.5.1\n#10 18.84  + fastapi==0.162.2\n#10 18.84  + h11==0.16.0\n#10 18.84  + httptools==0.9.0\n#10 18.84  + idna==3.20\n#10 18.84  + mako==1.4.3\n#10 18.84  + markupsafe==3.0.4\n#10 18.84  + opentelemetry-api==1.45.2\n#10 18.84  + psycopg==3.3.8\n#10 18.84  + psycopg-binary==3.3.8\n#10 18.84  + pwdlib==0.3.1\n#10 18.84  + pycparser==3.12\n#10 18.84  + pydantic==2.14.3\n#10 18.84  + pydantic-core==2.50.4\n#10 18.85  + python-dotenv==1.2.4\n#10 18.85  + pyyaml==6.0.3\n#10 18.85  + sqlalchemy==2.1.8\n#10 18.85  + starlette==1.10.0\n#10 18.85  + typing-extensions==4.16.0\n#10 18.85  + typing-inspection==0.4.5\n#10 18.85  + uvicorn==0.54.0\n#10 18.85  + uvloop==0.23.0\n#10 18.85  + watchfiles==1.3.0\n#10 18.85  + websockets==17.4\n#10 DONE 19.0s\n\n#11 [6/9] COPY app.py alembic.ini ./\n#11 DONE 0.1s\n\n#12 [7/9] COPY migrations ./migrations\n#12 DONE 0.0s\n\n#13 [8/9] COPY tests/deployment_smoke.py ./\n#13 DONE 0.0s\n\n#14 [9/9] RUN useradd --system --uid 10001 --no-create-home wellora\n#14 0.145 useradd warning: wellora's uid 10001 is greater than SYS_UID_MAX 999\n#14 DONE 0.2s\n\n#15 exporting to image\n#15 exporting layers\n#15 exporting layers 3.1s done\n#15 exporting manifest sha256:37d89092a0168d95f6163942addd2bcd871dd7ef2ed5f7f815e4d8653a886b49 0.0s done\n#15 exporting config sha256:8882e8ac6ae63b170e5f36c823a63edf636c51fcf99ef740878369aa5d52577e 0.0s done\n#15 exporting attestation manifest sha256:8f70739f74ce957e76894500c0bf4bb73f79488e0d2c1cc1de9dd8360b38cbba 0.0s done\n#15 exporting manifest list sha256:f87a22e55f239b1104bfe098cc7e7782e5369ca1e890e390fda1072e64d45ea7 done\n#15 naming to docker.io/library/server-api:latest done\n#15 unpacking to docker.io/library/server-api:latest\n#15 unpacking to docker.io/library/server-api:latest 1.0s done\n#15 DONE 4.2s\n\n#16 resolving provenance for metadata file\n#16 DONE 0.0s\n",
+    "stderr": " server-api  Built\n",
+    "exit": 0
+  },
+  {
+    "timestamp_utc": "2026-11-10T09:57:18.580517+00:00",
+    "label": "SERVER_RUNTIME",
+    "command": [
+      "ssh",
+      "-i",
+      "C:\\Users\\Administrator\\.ssh\\wellora-backend-root",
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=yes",
+      "-o",
+      "ConnectTimeout=10",
+      "root@114.116.233.113",
+      "set -eu; date -Is; id; cat /etc/os-release; docker --version; docker compose version; docker buildx version; free -m; df -h /; ip route; docker image ls --digests; ss -lnt; stat -c %a /opt/wellora/server/.env; sha256sum /opt/wellora/server/app.py /opt/wellora/server/tests/deployment_smoke.py"
+    ],
+    "stdout": "2026-11-10T17:57:18+08:00\nuid=0(root) gid=0(root) groups=0(root)\nPRETTY_NAME=\"Ubuntu 24.04.4 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"24.04\"\nVERSION=\"24.04.4 LTS (Noble Numbat)\"\nVERSION_CODENAME=noble\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=noble\nLOGO=ubuntu-logo\nDocker version 29.1.3, build 29.1.3-0ubuntu3~24.04.2\nDocker Compose version 2.40.3+ds1-0ubuntu1~24.04.1\ngithub.com/docker/buildx 0.30.1 0.30.1-0ubuntu1~24.04.1\n               total        used        free      shared  buff/cache   available\nMem:            1775         478         127           2        1346        1296\nSwap:              0           0           0\nFilesystem      Size  Used Avail Use% Mounted on\n/dev/vda1        40G  4.6G   34G  13% /\ndefault via 172.31.0.1 dev eth0 proto dhcp src 172.31.14.248 metric 100 \n169.254.169.254 via 172.31.0.1 dev eth0 proto dhcp src 172.31.14.248 metric 100 \n172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1 linkdown \n172.31.0.0/20 dev eth0 proto kernel scope link src 172.31.14.248 metric 100 \nREPOSITORY                            TAG                  DIGEST                                                                    IMAGE ID       CREATED          SIZE\nserver-api                            latest               sha256:f87a22e55f239b1104bfe098cc7e7782e5369ca1e890e390fda1072e64d45ea7   f87a22e55f23   32 seconds ago   360MB\npython                                3.12-slim-bookworm   <none>                                                                    935c3c5b1235   5 days ago       188MB\ndocker.m.daocloud.io/library/python   3.12-slim-bookworm   sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df   935c3c5b1235   5 days ago       188MB\nState  Recv-Q Send-Q Local Address:Port  Peer Address:PortProcess\nLISTEN 0      4096      127.0.0.54:53         0.0.0.0:*          \nLISTEN 0      4096       127.0.0.1:44839      0.0.0.0:*          \nLISTEN 0      128        127.0.0.1:6010       0.0.0.0:*          \nLISTEN 0      10         127.0.0.1:29338      0.0.0.0:*          \nLISTEN 0      10         127.0.0.1:29339      0.0.0.0:*          \nLISTEN 0      4096         0.0.0.0:22         0.0.0.0:*          \nLISTEN 0      4096   127.0.0.53%lo:53         0.0.0.0:*          \nLISTEN 0      128            [::1]:6010          [::]:*          \nLISTEN 0      4096            [::]:22            [::]:*          \n600\n9e7cc111aff321b94a9a432ad179f104b1d4dfbb4800ec5d03f612d1d481d7e6  /opt/wellora/server/app.py\nda11697d384f67f4409a4d358d532cf2a4623d95be7ce9ec7757619f83204fbf  /opt/wellora/server/tests/deployment_smoke.py\n",
+    "stderr": "",
+    "exit": 0
+  },
+  {
+    "timestamp_utc": "2026-11-10T10:02:37.461720+00:00",
+    "label": "REBUILD_WITH_DOCKERIGNORE",
+    "command": [
+      "ssh",
+      "-i",
+      "C:\\Users\\Administrator\\.ssh\\wellora-backend-root",
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=yes",
+      "-o",
+      "ConnectTimeout=10",
+      "root@114.116.233.113",
+      "set -eu; cd /opt/wellora/server; docker compose build api; docker compose config --quiet"
+    ],
+    "stdout": "#1 [internal] load local bake definitions\n#1 reading from stdin 477B done\n#1 DONE 0.0s\n\n#2 [internal] load build definition from Dockerfile\n#2 transferring dockerfile: 644B done\n#2 DONE 0.0s\n\n#3 [internal] load metadata for docker.io/library/python:3.12-slim-bookworm\n#3 DONE 0.0s\n\n#4 [internal] load .dockerignore\n#4 transferring context: 91B done\n#4 DONE 0.0s\n\n#5 [internal] load build context\n#5 DONE 0.0s\n\n#6 [1/9] FROM docker.io/library/python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df\n#6 resolve docker.io/library/python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df 0.0s done\n#6 DONE 0.0s\n\n#5 [internal] load build context\n#5 transferring context: 361B done\n#5 DONE 0.0s\n\n#7 [6/9] COPY app.py alembic.ini ./\n#7 CACHED\n\n#8 [3/9] RUN pip install --no-cache-dir uv==0.12.19\n#8 CACHED\n\n#9 [5/9] RUN uv sync --frozen --no-dev --no-install-project\n#9 CACHED\n\n#10 [7/9] COPY migrations ./migrations\n#10 CACHED\n\n#11 [2/9] WORKDIR /app\n#11 CACHED\n\n#12 [8/9] COPY tests/deployment_smoke.py ./\n#12 CACHED\n\n#13 [4/9] COPY pyproject.toml uv.lock ./\n#13 CACHED\n\n#14 [9/9] RUN useradd --system --uid 10001 --no-create-home wellora\n#14 CACHED\n\n#15 exporting to image\n#15 exporting layers done\n#15 exporting manifest sha256:37d89092a0168d95f6163942addd2bcd871dd7ef2ed5f7f815e4d8653a886b49 done\n#15 exporting config sha256:8882e8ac6ae63b170e5f36c823a63edf636c51fcf99ef740878369aa5d52577e done\n#15 exporting attestation manifest sha256:520d21bb42545176868c643172da183a5cb43a18af735b81ee352fd71e65666b 0.0s done\n#15 exporting manifest list sha256:e1e6fcaa219ffde16b80781ddb772b61675761103eb7073dee3d910e2d313051 done\n#15 naming to docker.io/library/server-api:latest done\n#15 unpacking to docker.io/library/server-api:latest done\n#15 DONE 0.1s\n\n#16 resolving provenance for metadata file\n#16 DONE 0.0s\n",
+    "stderr": " server-api  Built\n",
+    "exit": 0
+  },
+  {
+    "timestamp_utc": "2026-11-10T10:15:00.942572+00:00",
+    "label": "START_PRIVATE_SERVICES",
+    "command": [
+      "ssh",
+      "-i",
+      "C:\\Users\\Administrator\\.ssh\\wellora-backend-root",
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=yes",
+      "-o",
+      "ConnectTimeout=10",
+      "root@114.116.233.113",
+      "set -eu; docker tag docker.m.daocloud.io/library/postgres:16-alpine postgres:16-alpine; cd /opt/wellora/server; docker compose up -d --build db api; docker compose ps; sleep 8; docker compose ps"
+    ],
+    "stdout": "#1 [internal] load local bake definitions\n#1 reading from stdin 477B done\n#1 DONE 0.0s\n\n#2 [internal] load build definition from Dockerfile\n#2 transferring dockerfile: 644B done\n#2 DONE 0.0s\n\n#3 [internal] load metadata for docker.io/library/python:3.12-slim-bookworm\n#3 DONE 0.0s\n\n#4 [internal] load .dockerignore\n#4 transferring context: 91B done\n#4 DONE 0.0s\n\n#5 [1/9] FROM docker.io/library/python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df\n#5 resolve docker.io/library/python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df 0.0s done\n#5 DONE 0.0s\n\n#6 [internal] load build context\n#6 transferring context: 361B done\n#6 DONE 0.0s\n\n#7 [2/9] WORKDIR /app\n#7 CACHED\n\n#8 [7/9] COPY migrations ./migrations\n#8 CACHED\n\n#9 [3/9] RUN pip install --no-cache-dir uv==0.12.19\n#9 CACHED\n\n#10 [4/9] COPY pyproject.toml uv.lock ./\n#10 CACHED\n\n#11 [5/9] RUN uv sync --frozen --no-dev --no-install-project\n#11 CACHED\n\n#12 [6/9] COPY app.py alembic.ini ./\n#12 CACHED\n\n#13 [8/9] COPY tests/deployment_smoke.py ./\n#13 CACHED\n\n#14 [9/9] RUN useradd --system --uid 10001 --no-create-home wellora\n#14 CACHED\n\n#15 exporting to image\n#15 exporting layers done\n#15 exporting manifest sha256:37d89092a0168d95f6163942addd2bcd871dd7ef2ed5f7f815e4d8653a886b49 done\n#15 exporting config sha256:8882e8ac6ae63b170e5f36c823a63edf636c51fcf99ef740878369aa5d52577e done\n#15 exporting attestation manifest sha256:4f3f61629341f0aae39457a5ee146f5ea801e79b6024c77e9bdb62099a600fd8 0.0s done\n#15 exporting manifest list sha256:aba70004131b60021cbabc1efba8a8b907f7b7038873a7a086bb0bfafbf54581 0.0s done\n#15 naming to docker.io/library/server-api:latest done\n#15 unpacking to docker.io/library/server-api:latest 0.0s done\n#15 DONE 0.1s\n\n#16 resolving provenance for metadata file\n#16 DONE 0.0s\nNAME           IMAGE                COMMAND                  SERVICE   CREATED         STATUS                   PORTS\nserver-api-1   server-api           \"sh -c 'alembic upgr…\"   api       6 seconds ago   Up Less than a second    \nserver-db-1    postgres:16-alpine   \"docker-entrypoint.s…\"   db        6 seconds ago   Up 6 seconds (healthy)   5432/tcp\nNAME           IMAGE                COMMAND                  SERVICE   CREATED          STATUS                    PORTS\nserver-api-1   server-api           \"sh -c 'alembic upgr…\"   api       15 seconds ago   Up 8 seconds              \nserver-db-1    postgres:16-alpine   \"docker-entrypoint.s…\"   db        15 seconds ago   Up 14 seconds (healthy)   5432/tcp\n",
+    "stderr": " server-api  Built\n Network server_data  Creating\n Network server_data  Created\n Network server_edge  Creating\n Network server_edge  Created\n Volume server_postgres_data  Creating\n Volume server_postgres_data  Created\n Container server-db-1  Creating\n Container server-db-1  Created\n Container server-api-1  Creating\n Container server-api-1  Created\n Container server-db-1  Starting\n Container server-db-1  Started\n Container server-db-1  Waiting\n Container server-db-1  Healthy\n Container server-api-1  Starting\n Container server-api-1  Started\n",
+    "exit": 0
+  },
+  {
+    "timestamp_utc": "2026-11-10T10:15:51.165933+00:00",
+    "label": "POSTGRES_SMOKE_PREPARE",
+    "command": [
+      "ssh",
+      "-i",
+      "C:\\Users\\Administrator\\.ssh\\wellora-backend-root",
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=yes",
+      "-o",
+      "ConnectTimeout=10",
+      "root@114.116.233.113",
+      "set -eu; cd /opt/wellora/server; docker compose exec -T api python /app/deployment_smoke.py prepare"
+    ],
+    "stdout": "FRESH_POSTGRES_DATABASE=PASS\n",
+    "stderr": "Traceback (most recent call last):\n  File \"/app/deployment_smoke.py\", line 118, in <module>\n    {'prepare': prepare, 'verify': verify, 'cleanup': cleanup}[sys.argv[1]]()\n  File \"/app/deployment_smoke.py\", line 51, in prepare\n    with STATE.open('x', encoding='utf-8', opener=lambda path, flags: os.open(path, flags, 0o600)) as stream:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: Path.open() got an unexpected keyword argument 'opener'\n",
+    "exit": 1
+  },
+  {
+    "timestamp_utc": "2026-11-10T10:16:16.602891+00:00",
+    "label": "REBUILD_AND_PREPARE",
+    "command": [
+      "ssh",
+      "-i",
+      "C:\\Users\\Administrator\\.ssh\\wellora-backend-root",
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=yes",
+      "-o",
+      "ConnectTimeout=10",
+      "root@114.116.233.113",
+      "set -eu; cd /opt/wellora/server; docker compose build api; docker compose up -d api; sleep 3; docker compose exec -T api python /app/deployment_smoke.py prepare"
+    ],
+    "stdout": "#1 [internal] load local bake definitions\n#1 reading from stdin 477B done\n#1 DONE 0.0s\n\n#2 [internal] load build definition from Dockerfile\n#2 transferring dockerfile: 644B done\n#2 DONE 0.0s\n\n#3 [internal] load metadata for docker.io/library/python:3.12-slim-bookworm\n#3 DONE 0.0s\n\n#4 [internal] load .dockerignore\n#4 transferring context: 91B done\n#4 DONE 0.0s\n\n#5 [1/9] FROM docker.io/library/python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df\n#5 resolve docker.io/library/python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df 0.0s done\n#5 DONE 0.0s\n\n#6 [internal] load build context\n#6 transferring context: 5.92kB done\n#6 DONE 0.0s\n\n#7 [6/9] COPY app.py alembic.ini ./\n#7 CACHED\n\n#8 [5/9] RUN uv sync --frozen --no-dev --no-install-project\n#8 CACHED\n\n#9 [4/9] COPY pyproject.toml uv.lock ./\n#9 CACHED\n\n#10 [2/9] WORKDIR /app\n#10 CACHED\n\n#11 [3/9] RUN pip install --no-cache-dir uv==0.12.19\n#11 CACHED\n\n#12 [7/9] COPY migrations ./migrations\n#12 CACHED\n\n#13 [8/9] COPY tests/deployment_smoke.py ./\n#13 DONE 0.0s\n\n#14 [9/9] RUN useradd --system --uid 10001 --no-create-home wellora\n#14 0.291 useradd warning: wellora's uid 10001 is greater than SYS_UID_MAX 999\n#14 DONE 0.3s\n\n#15 exporting to image\n#15 exporting layers 0.1s done\n#15 exporting manifest sha256:21e449efbec011b37237675bec26b45342105d1f913ac53533c87f24ae99d9ad done\n#15 exporting config sha256:ed13079b4e471cc35c3ed959f6cdca0fd613ad0463dd25f1e2f55976ea312dac 0.0s done\n#15 exporting attestation manifest sha256:9243ca22da358229fa16907b8c8eade3e9c7fb8bc9c44201201c128cc3061489 0.0s done\n#15 exporting manifest list sha256:da78ddcf19155adba9940817b1a60e02a60c0effc7284534e800d3ef3229704d 0.0s done\n#15 naming to docker.io/library/server-api:latest done\n#15 unpacking to docker.io/library/server-api:latest 0.0s done\n#15 DONE 0.2s\n\n#16 resolving provenance for metadata file\n#16 DONE 0.0s\nFRESH_POSTGRES_DATABASE=PASS\nHEALTH=PASS\nREGISTER_A=PASS\nREGISTER_B=PASS\nLOGIN=PASS\nLOGIN=PASS\nCREATE_PROFILE=PASS\nOTHER_ACCOUNT_READ=PASS\nOTHER_ACCOUNT_UPDATE=PASS\nOTHER_ACCOUNT_LIST=PASS\nUPDATE_PROFILE=PASS\nSTALE_VERSION=PASS\nLOGOUT=PASS\nREVOKED_SESSION=PASS\nCONCURRENT_LAST_ACCOUNT_SLOT=PASS\nACCOUNT_LIMIT=PASS\nPREPARED_FOR_CONTAINER_RESTART\n",
+    "stderr": " server-api  Built\n Container server-db-1  Running\n Container server-api-1  Recreate\n Container server-api-1  Recreated\n Container server-db-1  Waiting\n Container server-db-1  Healthy\n Container server-api-1  Starting\n Container server-api-1  Started\n",
+    "exit": 0
+  },
+  {
+    "timestamp_utc": "2026-11-10T10:17:07.220973+00:00",
+    "label": "RESTART_AND_VERIFY_POSTGRES",
+    "command": [
+      "ssh",
+      "-i",
+      "C:\\Users\\Administrator\\.ssh\\wellora-backend-root",
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=yes",
+      "-o",
+      "ConnectTimeout=10",
+      "root@114.116.233.113",
+      "set -eu; cd /opt/wellora/server; docker compose restart api db; sleep 5; docker compose ps; docker compose exec -T api python /app/deployment_smoke.py verify"
+    ],
+    "stdout": "NAME           IMAGE                COMMAND                  SERVICE   CREATED          STATUS                   PORTS\nserver-api-1   server-api           \"sh -c 'alembic upgr…\"   api       57 seconds ago   Up 5 seconds             \nserver-db-1    postgres:16-alpine   \"docker-entrypoint.s…\"   db        2 minutes ago    Up 5 seconds (healthy)   5432/tcp\nPOST_RESTART_HEALTH=PASS\nPOST_RESTART_PROFILE=PASS\nPOST_RESTART_REVOCATION=PASS\nPOST_RESTART_ACCOUNT_COUNT=PASS\n",
+    "stderr": " Container server-db-1  Restarting\n Container server-api-1  Restarting\n Container server-db-1  Started\n Container server-api-1  Started\n",
+    "exit": 0
+  },
+  {
+    "timestamp_utc": "2026-11-10T10:17:25.689972+00:00",
+    "label": "CLEANUP_AND_PORT_AUDIT",
+    "command": [
+      "ssh",
+      "-i",
+      "C:\\Users\\Administrator\\.ssh\\wellora-backend-root",
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=yes",
+      "-o",
+      "ConnectTimeout=10",
+      "root@114.116.233.113",
+      "set -eu; cd /opt/wellora/server; docker compose exec -T api python /app/deployment_smoke.py cleanup; docker compose ps; docker compose logs --tail=40 api db; docker inspect --format \"{{.Name}} {{json .NetworkSettings.Ports}}\" server-api-1 server-db-1; ss -lnt"
+    ],
+    "stdout": "FIXTURE_ACCOUNTS_REMOVED=PASS\nFIXTURE_STATE_REMOVED\nNAME           IMAGE                COMMAND                  SERVICE   CREATED              STATUS                    PORTS\nserver-api-1   server-api           \"sh -c 'alembic upgr…\"   api       About a minute ago   Up 26 seconds             \nserver-db-1    postgres:16-alpine   \"docker-entrypoint.s…\"   db        2 minutes ago        Up 26 seconds (healthy)   5432/tcp\ndb-1  | \ndb-1  | \ndb-1  | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*\ndb-1  | \ndb-1  | waiting for server to shut down...2026-11-10 10:14:48.437 UTC [40] LOG:  received fast shutdown request\ndb-1  | .2026-11-10 10:14:48.439 UTC [40] LOG:  aborting any active transactions\ndb-1  | 2026-11-10 10:14:48.444 UTC [40] LOG:  background worker \"logical replication launcher\" (PID 46) exited with exit code 1\ndb-1  | 2026-11-10 10:14:48.444 UTC [41] LOG:  shutting down\ndb-1  | 2026-11-10 10:14:48.446 UTC [41] LOG:  checkpoint starting: shutdown immediate\ndb-1  | 2026-11-10 10:14:48.489 UTC [41] LOG:  checkpoint complete: wrote 926 buffers (5.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.020 s, sync=0.019 s, total=0.045 s; sync files=301, longest=0.004 s, average=0.001 s; distance=4283 kB, estimate=4283 kB; lsn=0/1925D58, redo lsn=0/1925D58\ndb-1  | 2026-11-10 10:14:48.498 UTC [40] LOG:  database system is shut down\ndb-1  |  done\ndb-1  | server stopped\ndb-1  | \ndb-1  | PostgreSQL init process complete; ready for start up.\ndb-1  | \ndb-1  | 2026-11-10 10:14:48.562 UTC [1] LOG:  starting PostgreSQL 16.15 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit\ndb-1  | 2026-11-10 10:14:48.562 UTC [1] LOG:  listening on IPv4 address \"0.0.0.0\", port 5432\ndb-1  | 2026-11-10 10:14:48.562 UTC [1] LOG:  listening on IPv6 address \"::\", port 5432\ndb-1  | 2026-11-10 10:14:48.565 UTC [1] LOG:  listening on Unix socket \"/var/run/postgresql/.s.PGSQL.5432\"\ndb-1  | 2026-11-10 10:14:48.570 UTC [56] LOG:  database system was shut down at 2026-11-10 10:14:48 UTC\ndb-1  | 2026-11-10 10:14:48.576 UTC [1] LOG:  database system is ready to accept connections\ndb-1  | 2026-11-10 10:16:59.154 UTC [1] LOG:  received fast shutdown request\ndb-1  | 2026-11-10 10:16:59.156 UTC [1] LOG:  aborting any active transactions\ndb-1  | 2026-11-10 10:16:59.156 UTC [187] FATAL:  terminating connection due to administrator command\ndb-1  | 2026-11-10 10:16:59.156 UTC [186] FATAL:  terminating connection due to administrator command\ndb-1  | 2026-11-10 10:16:59.160 UTC [1] LOG:  background worker \"logical replication launcher\" (PID 59) exited with exit code 1\ndb-1  | 2026-11-10 10:16:59.163 UTC [54] LOG:  shutting down\ndb-1  | 2026-11-10 10:16:59.165 UTC [54] LOG:  checkpoint starting: shutdown immediate\ndb-1  | 2026-11-10 10:16:59.183 UTC [54] LOG:  checkpoint complete: wrote 125 buffers (0.8%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.006 s, sync=0.005 s, total=0.020 s; sync files=62, longest=0.002 s, average=0.001 s; distance=520 kB, estimate=520 kB; lsn=0/19A7FB0, redo lsn=0/19A7FB0\ndb-1  | 2026-11-10 10:16:59.188 UTC [1] LOG:  database system is shut down\ndb-1  | \ndb-1  | PostgreSQL Database directory appears to contain a database; Skipping initialization\ndb-1  | \ndb-1  | 2026-11-10 10:16:59.503 UTC [1] LOG:  starting PostgreSQL 16.15 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit\ndb-1  | 2026-11-10 10:16:59.503 UTC [1] LOG:  listening on IPv4 address \"0.0.0.0\", port 5432\ndb-1  | 2026-11-10 10:16:59.503 UTC [1] LOG:  listening on IPv6 address \"::\", port 5432\ndb-1  | 2026-11-10 10:16:59.508 UTC [1] LOG:  listening on Unix socket \"/var/run/postgresql/.s.PGSQL.5432\"\ndb-1  | 2026-11-10 10:16:59.519 UTC [28] LOG:  database system was shut down at 2026-11-10 10:16:59 UTC\ndb-1  | 2026-11-10 10:16:59.527 UTC [1] LOG:  database system is ready to accept connections\napi-1  | INFO:     127.0.0.1:44358 - \"POST /api/v1/auth/login HTTP/1.1\" 200 OK\napi-1  | INFO:     127.0.0.1:44370 - \"POST /api/v1/auth/login HTTP/1.1\" 200 OK\napi-1  | INFO:     127.0.0.1:44374 - \"POST /api/v1/profiles HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:44386 - \"GET /api/v1/profiles/7af3b67f-f92f-47ad-a999-030c17bd1eb7 HTTP/1.1\" 404 Not Found\napi-1  | INFO:     127.0.0.1:44390 - \"PATCH /api/v1/profiles/7af3b67f-f92f-47ad-a999-030c17bd1eb7 HTTP/1.1\" 404 Not Found\napi-1  | INFO:     127.0.0.1:44398 - \"GET /api/v1/profiles HTTP/1.1\" 200 OK\napi-1  | INFO:     127.0.0.1:44414 - \"PATCH /api/v1/profiles/7af3b67f-f92f-47ad-a999-030c17bd1eb7 HTTP/1.1\" 200 OK\napi-1  | INFO:     127.0.0.1:44422 - \"PATCH /api/v1/profiles/7af3b67f-f92f-47ad-a999-030c17bd1eb7 HTTP/1.1\" 409 Conflict\napi-1  | INFO:     127.0.0.1:44428 - \"POST /api/v1/auth/logout HTTP/1.1\" 204 No Content\napi-1  | INFO:     127.0.0.1:44438 - \"GET /api/v1/profiles HTTP/1.1\" 401 Unauthorized\napi-1  | INFO:     127.0.0.1:44454 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37250 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37254 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37258 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37274 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37286 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37292 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37294 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37298 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37302 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37306 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37312 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37326 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37332 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37334 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37340 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37348 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37364 - \"POST /api/v1/auth/register HTTP/1.1\" 201 Created\napi-1  | INFO:     127.0.0.1:37362 - \"POST /api/v1/auth/register HTTP/1.1\" 429 Too Many Requests\napi-1  | INFO:     Shutting down\napi-1  | INFO:     Waiting for application shutdown.\napi-1  | INFO:     Application shutdown complete.\napi-1  | INFO:     Finished server process [1]\napi-1  | INFO:     Started server process [1]\napi-1  | INFO:     Waiting for application startup.\napi-1  | INFO:     Application startup complete.\napi-1  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)\napi-1  | INFO:     127.0.0.1:51322 - \"GET /api/v1/health HTTP/1.1\" 200 OK\napi-1  | INFO:     127.0.0.1:51330 - \"GET /api/v1/profiles/7af3b67f-f92f-47ad-a999-030c17bd1eb7 HTTP/1.1\" 200 OK\napi-1  | INFO:     127.0.0.1:51334 - \"GET /api/v1/profiles HTTP/1.1\" 401 Unauthorized\n/server-api-1 {}\n/server-db-1 {\"5432/tcp\":null}\nState  Recv-Q Send-Q Local Address:Port  Peer Address:PortProcess\nLISTEN 0      4096      127.0.0.54:53         0.0.0.0:*          \nLISTEN 0      4096       127.0.0.1:44839      0.0.0.0:*          \nLISTEN 0      128        127.0.0.1:6010       0.0.0.0:*          \nLISTEN 0      10         127.0.0.1:29338      0.0.0.0:*          \nLISTEN 0      10         127.0.0.1:29339      0.0.0.0:*          \nLISTEN 0      4096         0.0.0.0:22         0.0.0.0:*          \nLISTEN 0      4096   127.0.0.53%lo:53         0.0.0.0:*          \nLISTEN 0      128            [::1]:6010          [::]:*          \nLISTEN 0      4096            [::]:22            [::]:*          \n",
+    "stderr": "",
+    "exit": 0
+  },
+  {
+    "timestamp_utc": "2026-11-10T10:18:34.693108+00:00",
+    "label": "FINAL_POSTGRES_AUDIT",
+    "command": [
+      "ssh",
+      "-i",
+      "C:\\Users\\Administrator\\.ssh\\wellora-backend-root",
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=yes",
+      "-o",
+      "ConnectTimeout=10",
+      "root@114.116.233.113",
+      "set -eu; cd /opt/wellora/server; docker compose exec -T api python -m alembic current; docker compose exec -T api python -m alembic check; docker compose exec -T db psql -U wellora -d wellora -c \"SELECT (SELECT count(*) FROM accounts) AS accounts, (SELECT count(*) FROM profiles) AS profiles, (SELECT count(*) FROM sessions) AS sessions, (SELECT count(*) FROM login_throttles) AS login_throttles;\"; docker compose exec -T api id; docker compose ps --format json; docker image ls --digests; docker stats --no-stream; sha256sum app.py Dockerfile .dockerignore tests/deployment_smoke.py; stat -c %a .env"
+    ],
+    "stdout": "0001 (head)\nNo new upgrade operations detected.\n accounts | profiles | sessions | login_throttles \n----------+----------+----------+-----------------\n        0 |        0 |        0 |               0\n(1 row)\n\nuid=10001(wellora) gid=10001 groups=10001\n{\"Command\":\"\\\"sh -c 'alembic upgr…\\\"\",\"CreatedAt\":\"2026-11-10 18:16:07 +0800 CST\",\"ExitCode\":0,\"Health\":\"\",\"ID\":\"af64e80bd63b\",\"Image\":\"server-api\",\"Labels\":\"com.docker.compose.image=sha256:da78ddcf19155adba9940817b1a60e02a60c0effc7284534e800d3ef3229704d,com.docker.compose.oneoff=False,com.docker.compose.project=server,com.docker.compose.project.config_files=/opt/wellora/server/docker-compose.yml,com.docker.compose.project.working_dir=/opt/wellora/server,com.docker.compose.replace=api-1,com.docker.compose.service=api,com.docker.compose.config-hash=eba6c422950689dc9cf91005d335a50839ac0271982ad4b6da5d0d92fe820a59,com.docker.compose.depends_on=db:service_healthy:false,com.docker.compose.version=2.40.3,com.docker.compose.container-number=1\",\"LocalVolumes\":\"0\",\"Mounts\":\"\",\"Name\":\"server-api-1\",\"Names\":\"server-api-1\",\"Networks\":\"server_data,server_edge\",\"Ports\":\"\",\"Project\":\"server\",\"Publishers\":[],\"RunningFor\":\"2 minutes ago\",\"Service\":\"api\",\"Size\":\"0B\",\"State\":\"running\",\"Status\":\"Up About a minute\"}\n{\"Command\":\"\\\"docker-entrypoint.s…\\\"\",\"CreatedAt\":\"2026-11-10 18:14:46 +0800 CST\",\"ExitCode\":0,\"Health\":\"healthy\",\"ID\":\"4055e9c76cd6\",\"Image\":\"postgres:16-alpine\",\"Labels\":\"com.docker.compose.service=db,com.docker.compose.config-hash=ad84fcbe480abcd0859cd450e24467d8a9ced5582b25fcd15081c5410c0d2650,com.docker.compose.container-number=1,com.docker.compose.oneoff=False,com.docker.compose.version=2.40.3,com.docker.compose.depends_on=,com.docker.compose.image=sha256:aa6cb33cf4c19c765cefcf48d96176258800870a9a1e930ad126200f9d825139,com.docker.compose.project=server,com.docker.compose.project.config_files=/opt/wellora/server/docker-compose.yml,com.docker.compose.project.working_dir=/opt/wellora/server\",\"LocalVolumes\":\"1\",\"Mounts\":\"server_postgre…\",\"Name\":\"server-db-1\",\"Names\":\"server-db-1\",\"Networks\":\"server_data\",\"Ports\":\"5432/tcp\",\"Project\":\"server\",\"Publishers\":[{\"URL\":\"\",\"TargetPort\":5432,\"PublishedPort\":0,\"Protocol\":\"tcp\"}],\"RunningFor\":\"3 minutes ago\",\"Service\":\"db\",\"Size\":\"0B\",\"State\":\"running\",\"Status\":\"Up About a minute (healthy)\"}\nREPOSITORY                              TAG                  DIGEST                                                                    IMAGE ID       CREATED         SIZE\nserver-api                              latest               sha256:da78ddcf19155adba9940817b1a60e02a60c0effc7284534e800d3ef3229704d   da78ddcf1915   2 minutes ago   360MB\npostgres                                16-alpine            <none>                                                                    aa6cb33cf4c1   4 days ago      420MB\ndocker.m.daocloud.io/library/postgres   16-alpine            sha256:aa6cb33cf4c19c765cefcf48d96176258800870a9a1e930ad126200f9d825139   aa6cb33cf4c1   4 days ago      420MB\npython                                  3.12-slim-bookworm   <none>                                                                    935c3c5b1235   5 days ago      188MB\ndocker.m.daocloud.io/library/python     3.12-slim-bookworm   sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df   935c3c5b1235   5 days ago      188MB\nCONTAINER ID   NAME           CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O        PIDS\naf64e80bd63b   server-api-1   0.05%     66.52MiB / 1.734GiB   3.75%     30kB / 39kB       549kB / 0B       7\n4055e9c76cd6   server-db-1    0.01%     25.75MiB / 1.734GiB   1.45%     39.8kB / 28.4kB   1.68MB / 618kB   8\n9e7cc111aff321b94a9a432ad179f104b1d4dfbb4800ec5d03f612d1d481d7e6  app.py\nae3bfa122afa5229f556ef34fd2d4bb00387d6c56d23bbc4db88cc1b10ffa971  Dockerfile\nf91f4c6b8ca1b47bd30b8b83ba206898b4d95d5170842695d62d24904e71f490  .dockerignore\nfd2c5f53f15bcd16a248317c7e594b41009ad441aaf1f82dc8203a4d84c9c2e2  tests/deployment_smoke.py\n600\n",
+    "stderr": "",
+    "exit": 0
+  }
+]
