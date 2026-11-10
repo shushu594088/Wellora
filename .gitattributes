@@ -1,2 +1,4 @@
 # Keep user-provided prototype exports byte-for-byte in Git.
 docs/prototypes/** -text
+server/** text eol=lf
+evidence/transactions/P017-backend/** -text

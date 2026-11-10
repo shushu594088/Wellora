@@ -1,0 +1,212 @@
+{
+  "target": "C:\\Users\\Administrator\\Desktop\\Wellora\\server\\app.py",
+  "baseline_provenance": "Initial implementation authored during P017 before timezone correction. No pre-existing backend existed.",
+  "changed_symbol": "account_from_bearer / utc(token.expires_at)",
+  "input": {
+    "username": "transaction_test",
+    "password": "Fixture-Password-2026",
+    "database": "fresh SQLite per run"
+  },
+  "prior_errors": [
+    {
+      "command": "uv lock",
+      "exit": 2,
+      "reason": "Global mirror TLS handshake EOF; official PyPI succeeded"
+    },
+    {
+      "command": "initial pytest -q",
+      "exit": 1,
+      "reason": "3 failed, 3 passed: timezone comparison"
+    },
+    {
+      "command": "initial ROLLBACK.sh",
+      "exit": 49,
+      "stdout": "",
+      "stderr": "",
+      "reason": "python3 alias; prefer python"
+    },
+    {
+      "command": "normalized-text patch byte comparison",
+      "exit": 1,
+      "reason": "Line endings differed; preserve raw bytes"
+    },
+    {
+      "command": "zero-context git apply without --unidiff-zero",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "error: patch failed: app.py:7\nerror: app.py: patch does not apply\n",
+      "reason": "Zero-context patches require --unidiff-zero"
+    },
+    {
+      "command": "git rm --cached --quiet -- evidence/transactions/P017-backend/__pycache__",
+      "exit": null,
+      "reason": "Missing -r; retained cached files. Individual exit status was not captured."
+    },
+    {
+      "command": "git rm --cached -r -- evidence/transactions/P017-backend/__pycache__",
+      "exit": null,
+      "reason": "Staged and working cache differed; individual exit status was not captured. Removed from index with -f, keeping working files."
+    }
+  ],
+  "steps": [
+    {
+      "label": "BASELINE",
+      "command": [
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\server\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\probe.py",
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\BASELINE_FILE.py"
+      ],
+      "cwd": "C:\\Users\\Administrator\\Desktop\\Wellora",
+      "stdout": "REGISTER=201\nLOGIN=200\nERROR=TypeError: can't compare offset-naive and offset-aware datetimes\n",
+      "stderr": "",
+      "exit": 1
+    },
+    {
+      "label": "MODIFIED",
+      "command": [
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\server\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\probe.py",
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\MODIFIED_FILE.py"
+      ],
+      "cwd": "C:\\Users\\Administrator\\Desktop\\Wellora",
+      "stdout": "REGISTER=201\nLOGIN=200\nAUTHENTICATED_PROFILE_LIST=200\nPROFILE_COUNT=0\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "label": "ROLLBACK_SCRIPT",
+      "command": [
+        "C:\\Program Files\\Git\\bin\\bash.exe",
+        "--noprofile",
+        "--norc",
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\ROLLBACK.sh",
+        "C:\\Users\\Administrator\\AppData\\Local\\Temp\\wellora-p017-rollback-dlz6_l5e\\restored.py"
+      ],
+      "cwd": "C:\\Users\\Administrator\\Desktop\\Wellora",
+      "stdout": "RESTORED_PRISTINE_BASELINE\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "label": "ROLLBACK",
+      "command": [
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\server\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\probe.py",
+        "C:\\Users\\Administrator\\AppData\\Local\\Temp\\wellora-p017-rollback-dlz6_l5e\\restored.py"
+      ],
+      "cwd": "C:\\Users\\Administrator\\Desktop\\Wellora",
+      "stdout": "REGISTER=201\nLOGIN=200\nERROR=TypeError: can't compare offset-naive and offset-aware datetimes\n",
+      "stderr": "",
+      "exit": 1
+    },
+    {
+      "label": "PATCH_RECONSTRUCTION",
+      "command": [
+        "git",
+        "-c",
+        "core.autocrlf=false",
+        "apply",
+        "--unidiff-zero",
+        "--unsafe-paths",
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\DIFF_FILE.patch"
+      ],
+      "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\wellora-p017-patch-j3_vr71r",
+      "stdout": "",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "label": "API_TESTS",
+      "command": [
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\server\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short"
+      ],
+      "cwd": "C:\\Users\\Administrator\\Desktop\\Wellora\\server",
+      "stdout": "..............                                                           [100%]\n============================== warnings summary ===============================\n.venv\\Lib\\site-packages\\fastapi\\testclient.py:1\n  C:\\Users\\Administrator\\Desktop\\Wellora\\server\\.venv\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n14 passed, 1 warning in 3.73s\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "label": "COMPOSE_STATIC_CONFIG",
+      "command": [
+        "docker",
+        "compose",
+        "--env-file",
+        ".env.example",
+        "config",
+        "--quiet"
+      ],
+      "cwd": "C:\\Users\\Administrator\\Desktop\\Wellora\\server",
+      "stdout": "",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "label": "ALEMBIC_upgrade_head",
+      "command": [
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\server\\.venv\\Scripts\\python.exe",
+        "-m",
+        "alembic",
+        "upgrade",
+        "head"
+      ],
+      "cwd": "C:\\Users\\Administrator\\Desktop\\Wellora\\server",
+      "stdout": "",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "label": "ALEMBIC_check",
+      "command": [
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\server\\.venv\\Scripts\\python.exe",
+        "-m",
+        "alembic",
+        "check"
+      ],
+      "cwd": "C:\\Users\\Administrator\\Desktop\\Wellora\\server",
+      "stdout": "No new upgrade operations detected.\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "label": "ALEMBIC_downgrade_base",
+      "command": [
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\server\\.venv\\Scripts\\python.exe",
+        "-m",
+        "alembic",
+        "downgrade",
+        "base"
+      ],
+      "cwd": "C:\\Users\\Administrator\\Desktop\\Wellora\\server",
+      "stdout": "",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "label": "ALEMBIC_upgrade_head",
+      "command": [
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\server\\.venv\\Scripts\\python.exe",
+        "-m",
+        "alembic",
+        "upgrade",
+        "head"
+      ],
+      "cwd": "C:\\Users\\Administrator\\Desktop\\Wellora\\server",
+      "stdout": "",
+      "stderr": "",
+      "exit": 0
+    }
+  ],
+  "restored_sha256": "9597e51eb2db3d9901161c181be7d7f15323fdadb50545964b28ab6e5519fb83",
+  "rollback_hash_matches_baseline": true,
+  "patch_matches_modified": true,
+  "hashes": {
+    "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\BASELINE_FILE.py": "9597e51eb2db3d9901161c181be7d7f15323fdadb50545964b28ab6e5519fb83",
+    "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\MODIFIED_FILE.py": "9e7cc111aff321b94a9a432ad179f104b1d4dfbb4800ec5d03f612d1d481d7e6",
+    "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\DIFF_FILE.patch": "55819a4166a26e5d0608a37f7286f3bd0a02d34d99a0a565e00adb3b6c500d92",
+    "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\ROLLBACK.sh": "4e03fc20f3dc660dc095bfd5bc99a5e21c3876f52c87bc90e9542cb84143cc1d"
+  }
+}

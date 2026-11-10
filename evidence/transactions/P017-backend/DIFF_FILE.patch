@@ -1,0 +1,194 @@
+--- a/app.py
++++ b/app.py
+@@ -4,0 +5 @@
++import uuid
+@@ -7 +8,3 @@
+-from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
++from fastapi import Depends, FastAPI, HTTPException, Request, Response
++from fastapi.exceptions import RequestValidationError
++from fastapi.responses import JSONResponse
+@@ -11 +14,2 @@
+-from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, create_engine, select, text
++from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, create_engine, func, select, text, update
++from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+@@ -20,0 +25 @@
++dummy_password_hash = password_hash.hash(secrets.token_urlsafe(32))
+@@ -34 +39 @@
+-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: secrets.token_hex(16))
++    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+@@ -49,0 +55,9 @@
++class LoginThrottle(Base):
++    __tablename__ = "login_throttles"
++
++    key: Mapped[str] = mapped_column(String(64), primary_key=True)
++    failures: Mapped[int] = mapped_column(Integer, default=0)
++    window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
++    blocked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
++
++
+@@ -53 +67 @@
+-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: secrets.token_hex(16))
++    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+@@ -60,0 +75 @@
++    model_config = ConfigDict(extra="forbid")
+@@ -72,3 +87,4 @@
+-class Credentials(RegisterInput):
+-    username: str
+-    password: str
++class Credentials(BaseModel):
++    model_config = ConfigDict(extra="forbid")
++    username: str = Field(min_length=1, max_length=32)
++    password: str = Field(min_length=1, max_length=128)
+@@ -78 +94 @@
+-    model_config = ConfigDict(str_strip_whitespace=True)
++    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+@@ -87 +103 @@
+-            today = date.today()
++            today = datetime.now(timezone(timedelta(hours=8))).date()
+@@ -90 +106,2 @@
+-            if value > today.replace(year=today.year - 18):
++            age = today.year - value.year - ((today.month, today.day) < (value.month, value.day))
++            if age < 18:
+@@ -105,0 +123,4 @@
++
++
++def utc(value: datetime) -> datetime:
++    return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
+@@ -116 +137 @@
+-    if token is None or token.revoked_at is not None or token.expires_at <= now:
++    if token is None or token.revoked_at is not None or utc(token.expires_at) <= now:
+@@ -129,7 +149,0 @@
+-
+-
+-def ensure_profile_owner(db: Session, account: Account) -> Profile:
+-    profile = db.scalar(select(Profile).where(Profile.owner_account_id == account.id))
+-    if profile is None:
+-        raise HTTPException(status_code=404, detail="PROFILE_NOT_FOUND")
+-    return profile
+@@ -149,0 +164,26 @@
++@app.middleware("http")
++async def request_metadata(request: Request, call_next):
++    request.state.request_id = str(uuid.uuid4())
++    response = await call_next(request)
++    response.headers["X-Request-ID"] = request.state.request_id
++    response.headers["Cache-Control"] = "no-store"
++    return response
++
++
++@app.exception_handler(HTTPException)
++async def http_error(request: Request, exc: HTTPException):
++    return JSONResponse(status_code=exc.status_code, content={"error": {
++        "code": exc.detail,
++        "message": exc.detail,
++        "request_id": request.state.request_id,
++    }}, headers=exc.headers)
++
++
++@app.exception_handler(RequestValidationError)
++async def invalid_input(request: Request, exc: RequestValidationError):
++    # Never echo validation input: it can contain passwords or health information.
++    return JSONResponse(status_code=422, content={"error": {
++        "code": "INVALID_INPUT", "message": "请检查输入内容", "request_id": request.state.request_id,
++    }})
++
++
+@@ -152 +192,4 @@
+-    db.execute(text("SELECT 1"))
++    try:
++        db.execute(text("SELECT 1"))
++    except SQLAlchemyError as exc:
++        raise HTTPException(status_code=503, detail="DATABASE_UNAVAILABLE") from exc
+@@ -157,0 +201,3 @@
++    hashed_password = password_hash.hash(payload.password)
++    if db.bind.dialect.name == "postgresql":
++        db.execute(text("SELECT pg_advisory_xact_lock(17001)"))
+@@ -160 +206 @@
+-    if db.scalar(select(Account.id).limit(ACTIVE_ACCOUNT_LIMIT).offset(ACTIVE_ACCOUNT_LIMIT - 1)):
++    if db.scalar(select(func.count()).select_from(Account).where(Account.status == "active")) >= ACTIVE_ACCOUNT_LIMIT:
+@@ -162 +208 @@
+-    account = Account(username=payload.username, password_hash=password_hash.hash(payload.password))
++    account = Account(username=payload.username, password_hash=hashed_password)
+@@ -166 +212 @@
+-    except Exception as exc:
++    except IntegrityError as exc:
+@@ -168,4 +214 @@
+-        if "unique" in str(exc).lower():
+-            raise HTTPException(status_code=409, detail="USERNAME_TAKEN") from exc
+-        raise
+-    raw_token, expires_at = start_session(db, account)
++        raise HTTPException(status_code=409, detail="USERNAME_TAKEN") from exc
+@@ -173 +216 @@
+-    return {"account_id": account.id, "access_token": raw_token, "expires_at": expires_at}
++    return {"account_id": account.id}
+@@ -177,0 +221,19 @@
++    now = datetime.now(timezone.utc)
++    limits = {
++        digest_token("username:" + payload.username): 5,
++        digest_token("ip:" + request.client.host): 30,
++    }
++    states = []
++    for key in sorted(limits):
++        if db.bind.dialect.name == "postgresql":
++            lock_id = int(key[:15], 16)
++            db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": lock_id})
++        state = db.get(LoginThrottle, key)
++        if state is None:
++            state = LoginThrottle(key=key, failures=0, window_start=now)
++            db.add(state)
++        elif state.blocked_until and utc(state.blocked_until) > now:
++            raise HTTPException(status_code=429, detail="LOGIN_RATE_LIMITED", headers={"Retry-After": "900"})
++        elif utc(state.window_start) <= now - timedelta(minutes=15):
++            state.failures, state.window_start, state.blocked_until = 0, now, None
++        states.append(state)
+@@ -179 +241,7 @@
+-    if account is None or account.status != "active" or not password_hash.verify(payload.password, account.password_hash):
++    valid_password = password_hash.verify(payload.password, account.password_hash if account else dummy_password_hash)
++    if not valid_password or account is None or account.status != "active":
++        for state in states:
++            state.failures += 1
++            if state.failures >= limits[state.key]:
++                state.blocked_until = now + timedelta(minutes=15)
++        db.commit()
+@@ -180,0 +249,3 @@
++    for state in states:
++        if state.key == digest_token("username:" + payload.username):
++            state.failures, state.window_start, state.blocked_until = 0, now, None
+@@ -201 +272,2 @@
+-    return profile_result(ensure_profile_owner(db, account))
++    profile = db.scalar(select(Profile).where(Profile.owner_account_id == account.id))
++    return {"items": [profile_result(profile)] if profile else [], "next_cursor": None}
+@@ -215 +287,5 @@
+-    db.commit()
++    try:
++        db.commit()
++    except IntegrityError as exc:
++        db.rollback()
++        raise HTTPException(status_code=409, detail="PROFILE_ALREADY_EXISTS") from exc
+@@ -220 +296,9 @@
+-@app.patch("/api/v1/profiles")
++@app.get("/api/v1/profiles/{profile_id}")
++def get_profile_by_id(profile_id: uuid.UUID, account: Account = Depends(account_from_bearer), db: Session = Depends(get_db)):
++    profile = db.scalar(select(Profile).where(Profile.id == str(profile_id), Profile.owner_account_id == account.id))
++    if profile is None:
++        raise HTTPException(status_code=404, detail="PROFILE_NOT_FOUND")
++    return profile_result(profile)
++
++
++@app.patch("/api/v1/profiles/{profile_id}")
+@@ -221,0 +306 @@
++    profile_id: uuid.UUID,
+@@ -226,2 +311,8 @@
+-    profile = ensure_profile_owner(db, account)
+-    if profile.version != payload.version:
++    profile = db.scalar(select(Profile).where(Profile.id == str(profile_id), Profile.owner_account_id == account.id))
++    if profile is None:
++        raise HTTPException(status_code=404, detail="PROFILE_NOT_FOUND")
++    result = db.execute(update(Profile).where(
++        Profile.id == str(profile_id), Profile.owner_account_id == account.id, Profile.version == payload.version,
++    ).values(display_name=payload.display_name, birth_date=payload.birth_date, version=Profile.version + 1))
++    if result.rowcount != 1:
++        db.rollback()
+@@ -229,3 +319,0 @@
+-    profile.display_name = payload.display_name
+-    profile.birth_date = payload.birth_date
+-    profile.version += 1
