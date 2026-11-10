@@ -2,7 +2,7 @@
 
 面向全年龄用户的健康管理与就医辅助应用，默认标准模式，可切长辈模式。重点是档案、报告校对解读与对比、咨询和科室参考、用药与家属协助。首阶段仅面向不超过 20 个成年试用账号。
 
-当前状态：2026-11-10 开始后端测试版，首轮目标为用户名密码注册登录、本人基础档案持久化及账号隔离，再接入 Android 手机测试。服务器为北京 Ubuntu Server 24.04、2 核 2GiB、40GiB、100GB 流量、峰值 2Mbit/s，公网 IP `114.116.233.113`；SSH 公钥登录和 Docker 安装已验证；后端域名选定 api.shushu520.top，用户暂不备案，先进行内部验证。不得以公网 HTTP 测试凭据或健康资料。现有 Compose 前端仍为离线虚拟数据演示；其余业务后端尚未接入。
+当前状态：2026-11-10 后端测试版已完成首轮账号／本人档案 API 和服务器内部验证，正在接入 Android。域名 api.shushu520.top 暂不备案；WireGuard 手机联调未握手，用户改选临时 Cloudflare HTTPS Quick Tunnel。测试 API 不映射公网端口；隧道地址临时且请求经 Cloudflare 转发，仅用虚构账号与档案，完成后关闭隧道。debug APK 使用 HTTPS；release 配置不变，正式公网接入仍待备案及 TLS。
 
 ## 文档导航
 
@@ -15,6 +15,7 @@
 - [Prompt 证据索引](evidence/index.md)
 - [后端测试服务说明](server/README.md)
 - [P017：账号与本人档案后端测试版](evidence/prompts/P017.md)
+- [P018：Android 临时 HTTPS 联调](evidence/prompts/P018.md)
 - [P001：初始化 Git](evidence/prompts/P001.md)
 - [P002：归档 Stitch 原型](evidence/prompts/P002.md)
 - [P003：需求、架构与界面文档](evidence/prompts/P003.md)

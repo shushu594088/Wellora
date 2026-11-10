@@ -1,0 +1,63 @@
+{
+  "observed_utc": "2026-11-10T12:39:55.125840+00:00",
+  "base_url": "https://took-gray-bernard-critics.trycloudflare.com",
+  "apk": {
+    "path": "C:\\Users\\Administrator\\Desktop\\Wellora\\app\\build\\outputs\\apk\\debug\\app-debug.apk",
+    "bytes": 19757553,
+    "sha256": "0d116563b85dd614624b0e6b2f11a495b169eb73c86185844a568e93cbf2a019"
+  },
+  "https_health": {
+    "status": 200,
+    "body": "{\"status\":\"ok\"}"
+  },
+  "android_test_report": {
+    "tests": "11",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.000",
+    "timestamp": "2026-11-10T12:33:34",
+    "hostname": "localhost"
+  },
+  "server": {
+    "command": [
+      "ssh",
+      "-i",
+      "C:/Users/Administrator/.ssh/wellora-backend-root",
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=yes",
+      "root@114.116.233.113",
+      "docker inspect wellora-quick-tunnel --format '{{.State.Running}} {{.HostConfig.RestartPolicy.Name}} {{json .HostConfig.PortBindings}}'; docker inspect server-api-1 server-db-1 --format '{{.Name}} {{json .HostConfig.PortBindings}}'; docker exec server-db-1 psql -U wellora -d wellora -Atc 'select count(*) from accounts; select count(*) from profiles; select count(*) from sessions; select count(*) from login_throttles;'"
+    ],
+    "stdout": "true no {}\n/server-api-1 {\"8000/tcp\":[{\"HostIp\":\"10.66.0.1\",\"HostPort\":\"8000\"}]}\n/server-db-1 {}\n0\n0\n0\n0\n",
+    "stderr": "",
+    "exit": 0
+  },
+  "roles": {
+    "MODIFIED_FILE.kt": {
+      "path": "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\android\\MODIFIED_FILE.kt",
+      "sha256": "6239e1384f82c10868c0512298dfb557722cc510626d5c95a95231aeef90ce22",
+      "bytes": 5509
+    },
+    "DIFF_FILE.patch": {
+      "path": "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\android\\DIFF_FILE.patch",
+      "sha256": "a1a849b48595a917d45ae345e7e9fa01d5b9edfd55f0debd25f5f7677ef9e435",
+      "bytes": 1783
+    },
+    "VERIFICATION.txt": {
+      "path": "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\android\\VERIFICATION.txt",
+      "sha256": "fa9634d40ff1b8b2f521ce4616ab4ac80414c0cd73a5a82da40c7b74bc6e9f93",
+      "bytes": 2905
+    },
+    "ROLLBACK.sh": {
+      "path": "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\android\\ROLLBACK.sh",
+      "sha256": "03720048a40201c337e9347f31d71f343f1e9cfb8bfb40a18941f3d54f18ac48",
+      "bytes": 6848
+    }
+  },
+  "phone_acceptance": "PENDING",
+  "ui_source_changed_this_turn": false,
+  "stop_command": "docker stop wellora-quick-tunnel"
+}

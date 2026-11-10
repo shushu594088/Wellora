@@ -1,0 +1,25 @@
+diff --git a/MainActivity.kt b/MainActivity.kt
+index e78bfc6..0a29704 100644
+--- a/MainActivity.kt
++++ b/MainActivity.kt
+@@ -10,0 +11,2 @@ import androidx.compose.runtime.Composable
++import androidx.compose.runtime.collectAsState
++import androidx.lifecycle.ViewModelProvider
+@@ -19,0 +22,3 @@ import com.nmy.wellora.ui.feature.records.AccountScreen
++import com.nmy.wellora.ui.feature.records.AccountPanel
++import com.nmy.wellora.ui.feature.records.AccountViewModel
++import com.nmy.wellora.ui.feature.records.BasicProfileSummary
+@@ -31 +36,2 @@ class MainActivity : ComponentActivity() {
+-        setContent { WelloraTheme { WelloraApp() } }
++        val accountModel = ViewModelProvider(this)[AccountViewModel::class.java]
++        setContent { WelloraTheme { WelloraApp(accountModel) } }
+@@ -45 +51,2 @@ enum class WelloraRoute(val title: String) {
+-private fun WelloraApp() {
++private fun WelloraApp(accountModel: AccountViewModel) {
++    val accountState by accountModel.state.collectAsState()
+@@ -90 +97 @@ private fun WelloraApp() {
+-            WelloraRoute.Records -> RecordsScreen(seniorMode, completedUpload, open, Modifier.fillMaxSize().padding(innerPadding))
++            WelloraRoute.Records -> RecordsScreen(seniorMode, completedUpload, open, Modifier.fillMaxSize().padding(innerPadding), profileContent = { BasicProfileSummary(accountState) { route = WelloraRoute.Account } })
+@@ -92 +99 @@ private fun WelloraApp() {
+-            WelloraRoute.Account -> AccountScreen(seniorMode, { seniorMode = !seniorMode }, open, Modifier.fillMaxSize().padding(innerPadding))
++            WelloraRoute.Account -> AccountScreen(seniorMode, { seniorMode = !seniorMode }, open, Modifier.fillMaxSize().padding(innerPadding), accountContent = { AccountPanel(accountModel, seniorMode) })

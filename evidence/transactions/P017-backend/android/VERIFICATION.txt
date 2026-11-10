@@ -1,0 +1,72 @@
+{
+  "target": "C:\\Users\\Administrator\\Desktop\\Wellora\\app\\src\\main\\java\\com\\nmy\\wellora\\MainActivity.kt",
+  "changed_symbol": "WelloraApp / AccountPanel / BasicProfileSummary",
+  "scope": "Structural wiring comparison; runtime tests are in DEVICE_TEST_RESULTS.xml",
+  "steps": [
+    {
+      "label": "BASELINE",
+      "command": [
+        "D:\\Python312\\python.exe",
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\android\\probe_main.py",
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\android\\BASELINE_FILE.kt"
+      ],
+      "stdout": "INPUT=account-and-records\nACCOUNT_VIEWMODEL_BOUND=False\nACCOUNT_PANEL_BOUND=False\nLIVE_RECORDS_SUMMARY_BOUND=False\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "label": "MODIFIED",
+      "command": [
+        "D:\\Python312\\python.exe",
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\android\\probe_main.py",
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\android\\MODIFIED_FILE.kt"
+      ],
+      "stdout": "INPUT=account-and-records\nACCOUNT_VIEWMODEL_BOUND=True\nACCOUNT_PANEL_BOUND=True\nLIVE_RECORDS_SUMMARY_BOUND=True\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "label": "ROLLBACK_SCRIPT",
+      "command": [
+        "C:\\Program Files\\Git\\bin\\bash.exe",
+        "--noprofile",
+        "--norc",
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\android\\ROLLBACK.sh",
+        "C:\\Users\\Administrator\\AppData\\Local\\Temp\\wellora-p018-ijbxjabj\\restored.kt"
+      ],
+      "stdout": "RESTORED_PRISTINE_MAINACTIVITY\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "label": "ROLLBACK",
+      "command": [
+        "D:\\Python312\\python.exe",
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\android\\probe_main.py",
+        "C:\\Users\\Administrator\\AppData\\Local\\Temp\\wellora-p018-ijbxjabj\\restored.kt"
+      ],
+      "stdout": "INPUT=account-and-records\nACCOUNT_VIEWMODEL_BOUND=False\nACCOUNT_PANEL_BOUND=False\nLIVE_RECORDS_SUMMARY_BOUND=False\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "label": "PATCH_RECONSTRUCTION",
+      "command": [
+        "git",
+        "-c",
+        "core.autocrlf=false",
+        "apply",
+        "--unidiff-zero",
+        "--unsafe-paths",
+        "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\android\\DIFF_FILE.patch"
+      ],
+      "stdout": "",
+      "stderr": "",
+      "exit": 0
+    }
+  ],
+  "baseline_sha256": "edf457373370c570ef0c14a62790eda6b8d78207a93c5900ee6bd7b02d838996",
+  "modified_sha256": "6239e1384f82c10868c0512298dfb557722cc510626d5c95a95231aeef90ce22",
+  "rollback_matches_baseline": true,
+  "patch_reconstructs_modified": true
+}

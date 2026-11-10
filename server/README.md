@@ -30,3 +30,17 @@ On a new empty test database, prepare with `docker compose exec -T api python /a
 Ubuntu 24.04.4, Docker 29.1.3, Compose 2.40.3, Buildx 0.30.1. API built and runs as UID/GID 10001. PostgreSQL 16.15 migration is at `0001`; Alembic check reports no new operations. Smoke prepare and verify passed, including two-account isolation, stale-version rejection, concurrent 20-account limit, logout revocation and profile/session state after restarting both containers. Cleanup left accounts, profiles, sessions and login_throttles all at zero. Both services remain running privately, with no published host ports. Caddy was not started; HTTPS and Android/mobile tests are pending.
 
 Docker Hub was unreachable from this server. The initial pull failed with a timeout. This run downloaded `docker.m.daocloud.io/library/postgres:16-alpine` and `docker.m.daocloud.io/library/python:3.12-slim-bookworm`, then tagged them locally as `postgres:16-alpine` and `python:3.12-slim-bookworm` before building. No daemon-wide mirror configuration was changed. Observed digests: PostgreSQL `sha256:aa6cb33cf4c19c765cefcf48d96176258800870a9a1e930ad126200f9d825139`, Python `sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df`. The third-party mirror is only the download path; exact image identities and literal commands/results are recorded in `evidence/transactions/P017-backend/SERVER_VERIFICATION.json`.
+
+## P018 temporary HTTPS mobile test (current choice)
+
+WireGuard was installed but the phone peer never handshook. The user selected an accountless Cloudflare Quick Tunnel for fictional test data only. Container `wellora-quick-tunnel` joins `server_edge` and forwards to `http://api:8000`, publishes no ports, and has restart policy `no`. The temporary HTTPS URL is printed by `docker logs wellora-quick-tunnel`; it may change on restart. No DNS or production release URL changes. Stop with `docker stop wellora-quick-tunnel` after testing. This is a public test URL routed through Cloudflare, not production deployment or a permanent hostname; no real health information or reused credentials. API/database host port exposure is unchanged.
+
+Build the debug APK with `gradlew.bat :app:assembleDebug -PwelloraApiBaseUrl=HTTPS_URL`. Verify HTTPS `/api/v1/health` and run `:app:connectedDebugAndroidTest` with `-Pandroid.testInstrumentationRunnerArguments.wellora.serverTest=true` (quote the whole argument in PowerShell); the opt-in creates reserved fictional `android18_` fixture accounts. Clean these with the existing `cleanup_android_fixtures.py` after testing. Never export session tokens or the server .env.
+
+Observed one-time startup command (existing container name must be free):
+
+```sh
+docker run -d --name wellora-quick-tunnel --restart=no --network server_edge --memory=128m --pids-limit=64 docker.m.daocloud.io/cloudflare/cloudflared@sha256:4955524aeaa379e154023d5a027c250f7b35041a2e7e950cf13f144bc9b9c5ba tunnel --no-autoupdate --url http://api:8000
+```
+
+The default API proxy trust list was not expanded for Cloudflare. Login IP throttling is shared by tunnel requests at their internal connection IP; this is a small fictional-data test setup, not production rate limiting.

@@ -1,0 +1,146 @@
+[
+  {
+    "timestamp_utc": "2026-11-10T12:13:57.132999+00:00",
+    "label": "VPN_ROLLBACK",
+    "command": [
+      "ssh",
+      "-i",
+      "C:/Users/Administrator/.ssh/wellora-backend-root",
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=yes",
+      "root@114.116.233.113",
+      "sh /opt/wellora/server/rollback-test-vpn.sh && docker inspect server-api-1 --format \"{{json .HostConfig.PortBindings}}\" && (systemctl is-active wg-quick@wg0 || true)"
+    ],
+    "stdout": "RESTORED_PRIVATE_DB_API_WITHOUT_HOST_PORTS; keys retained in /etc/wireguard\n{}\ninactive\n",
+    "stderr": "Removed \"/etc/systemd/system/multi-user.target.wants/wellora-vpn-api.service\".\n Container server-db-1  Running\n Container server-api-1  Recreate\n Container server-api-1  Recreated\n Container server-db-1  Waiting\n Container server-db-1  Healthy\n Container server-api-1  Starting\n Container server-api-1  Started\nRemoved \"/etc/systemd/system/multi-user.target.wants/wg-quick@wg0.service\".\n",
+    "exit": 0
+  },
+  {
+    "timestamp_utc": "2026-11-10T12:14:23.729365+00:00",
+    "label": "VPN_REAPPLY",
+    "command": [
+      "ssh",
+      "-i",
+      "C:/Users/Administrator/.ssh/wellora-backend-root",
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=yes",
+      "root@114.116.233.113",
+      "systemctl enable --now wg-quick@wg0 && systemctl enable --now wellora-vpn-api && docker inspect server-api-1 --format \"{{json .HostConfig.PortBindings}}\" && systemctl is-active wg-quick@wg0 wellora-vpn-api"
+    ],
+    "stdout": "{\"8000/tcp\":[{\"HostIp\":\"10.66.0.1\",\"HostPort\":\"8000\"}]}\nactive\nactive\n",
+    "stderr": "Created symlink /etc/systemd/system/multi-user.target.wants/wg-quick@wg0.service → /usr/lib/systemd/system/wg-quick@.service.\nCreated symlink /etc/systemd/system/multi-user.target.wants/wellora-vpn-api.service → /etc/systemd/system/wellora-vpn-api.service.\n",
+    "exit": 0
+  },
+  {
+    "timestamp_utc": "2026-11-10T12:16:55.543810+00:00",
+    "label": "CLEANUP_ANDROID_FIXTURES",
+    "command": [
+      "ssh",
+      "-i",
+      "C:/Users/Administrator/.ssh/wellora-backend-root",
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=yes",
+      "root@114.116.233.113",
+      "docker cp /opt/wellora/server/cleanup_android_fixtures.py server-api-1:/tmp/cleanup_android_fixtures.py && docker exec -e PYTHONPATH=/app server-api-1 python /tmp/cleanup_android_fixtures.py"
+    ],
+    "stdout": "REMOVED_RESERVED_ANDROID_FIXTURE_ACCOUNTS=6\naccounts=0\nprofiles=0\nsessions=0\nlogin_throttles=0\n",
+    "stderr": "",
+    "exit": 0
+  },
+  {
+    "timestamp_utc": "2026-11-10T12:32:44.381074+00:00",
+    "label": "HTTPS_ANDROID_TESTS",
+    "command": [
+      ".\\gradlew.bat",
+      ":app:connectedDebugAndroidTest",
+      "-PwelloraApiBaseUrl=https://took-gray-bernard-critics.trycloudflare.com",
+      "-Pandroid",
+      ".testInstrumentationRunnerArguments.wellora.serverTest=true",
+      "--console=plain"
+    ],
+    "stdout": "Calculating task graph as no cached configuration is available for tasks: :app:connectedDebugAndroidTest .testInstrumentationRunnerArguments.wellora.serverTest=true\n\n[Incubating] Problems report is available at: file:///C:/Users/Administrator/Desktop/Wellora/build/reports/problems/problems-report.html\nConfiguration cache entry stored.\n",
+    "stderr": "\nFAILURE: Build failed with an exception.\n\n* What went wrong:\nSelection failed\n  Task '.testInstrumentationRunnerArguments.wellora.serverTest=true' not found in root project 'Wellora' and its subprojects.\n\n* Try:\n> Run gradlew tasks to get a list of available tasks.\n> For more on name expansion, please refer to https://docs.gradle.org/9.6.0/userguide/command_line_interface.html#sec:name_abbreviation in the Gradle documentation.\n> Run with --stacktrace option to get the stack trace.\n> Run with --info or --debug option to get more log output.\n> Run with --scan to get full insights from a Build Scan (powered by Develocity).\n> Get more help at https://help.gradle.org.\n\nBUILD FAILED in 664ms\n",
+    "exit": 1
+  },
+  {
+    "timestamp_utc": "2026-11-10T12:33:35.005170+00:00",
+    "label": "HTTPS_ANDROID_TESTS_RETRY",
+    "command": [
+      ".\\gradlew.bat",
+      ":app:connectedDebugAndroidTest",
+      "-PwelloraApiBaseUrl=https://took-gray-bernard-critics.trycloudflare.com",
+      "-Pandroid.testInstrumentationRunnerArguments.wellora.serverTest=true",
+      "--console=plain"
+    ],
+    "stdout": "Calculating task graph as configuration cache cannot be reused because file 'app\\build.gradle.kts' has changed.\n> Task :app:generateDebugAndroidTestAssets UP-TO-DATE\n> Task :app:preBuild UP-TO-DATE\n> Task :app:generateDebugAssets UP-TO-DATE\n> Task :app:preDebugBuild UP-TO-DATE\n> Task :app:preDebugAndroidTestBuild SKIPPED\n> Task :app:writeDebugSigningConfigVersions UP-TO-DATE\n> Task :app:generateDebugResources UP-TO-DATE\n> Task :app:mergeDebugJniLibFolders UP-TO-DATE\n> Task :app:generateDebugGlobalSynthetics UP-TO-DATE\n> Task :app:validateSigningDebug UP-TO-DATE\n> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE\n> Task :app:mapDebugSourceSetPaths UP-TO-DATE\n> Task :app:writeDebugAppMetadata UP-TO-DATE\n> Task :app:generateDebugBuildConfig UP-TO-DATE\n> Task :app:extractDeepLinksDebug UP-TO-DATE\n> Task :app:javaPreCompileDebug UP-TO-DATE\n> Task :app:desugarDebugFileDependencies UP-TO-DATE\n> Task :app:generateDebugAndroidTestResources UP-TO-DATE\n> Task :app:processDebugAndroidTestNavigationResources UP-TO-DATE\n> Task :app:checkDebugDuplicateClasses UP-TO-DATE\n> Task :app:processDebugNavigationResources UP-TO-DATE\n> Task :app:writeDebugAndroidTestSigningConfigVersions UP-TO-DATE\n> Task :app:javaPreCompileDebugAndroidTest UP-TO-DATE\n> Task :app:mapDebugAndroidTestSourceSetPaths UP-TO-DATE\n> Task :app:desugarDebugAndroidTestFileDependencies UP-TO-DATE\n> Task :app:generateDebugAndroidTestGlobalSynthetics UP-TO-DATE\n> Task :app:validateSigningDebugAndroidTest UP-TO-DATE\n> Task :app:mergeDebugAndroidTestJniLibFolders UP-TO-DATE\n> Task :app:packageDebugResources UP-TO-DATE\n> Task :app:mergeDebugAssets UP-TO-DATE\n> Task :app:checkDebugAarMetadata UP-TO-DATE\n> Task :app:parseDebugLocalResources UP-TO-DATE\n> Task :app:compileDebugNavigationResources UP-TO-DATE\n> Task :app:packageDebugAndroidTestResources UP-TO-DATE\n> Task :app:generateDebugRFile UP-TO-DATE\n> Task :app:compressDebugAssets UP-TO-DATE\n> Task :app:compileDebugAndroidTestNavigationResources UP-TO-DATE\n> Task :app:mergeLibDexDebug UP-TO-DATE\n> Task :app:parseDebugAndroidTestLocalResources UP-TO-DATE\n> Task :app:mergeDebugResources UP-TO-DATE\n> Task :app:generateDebugAndroidTestRFile UP-TO-DATE\n> Task :app:mergeDebugNativeLibs UP-TO-DATE\n> Task :app:mergeExtDexDebug UP-TO-DATE\n> Task :app:stripDebugDebugSymbols UP-TO-DATE\n> Task :app:processDebugMainManifest UP-TO-DATE\n> Task :app:processDebugManifest UP-TO-DATE\n> Task :app:processDebugManifestForPackage UP-TO-DATE\n> Task :app:mergeDebugAndroidTestAssets UP-TO-DATE\n> Task :app:checkDebugAndroidTestAarMetadata UP-TO-DATE\n> Task :app:compressDebugAndroidTestAssets UP-TO-DATE\n> Task :app:mergeDebugAndroidTestResources UP-TO-DATE\n> Task :app:mergeDebugAndroidTestNativeLibs NO-SOURCE\n> Task :app:stripDebugAndroidTestDebugSymbols NO-SOURCE\n> Task :app:mergeDebugAndroidTestManifest UP-TO-DATE\n> Task :app:checkDebugAndroidTestDuplicateClasses UP-TO-DATE\n> Task :app:processDebugAndroidTestManifest UP-TO-DATE\n> Task :app:mergeLibDexDebugAndroidTest UP-TO-DATE\n> Task :app:processDebugResources UP-TO-DATE\n> Task :app:mergeExtDexDebugAndroidTest UP-TO-DATE\n> Task :app:processDebugAndroidTestResources UP-TO-DATE\n> Task :app:generateDebugAndroidTestBuildConfig\n> Task :app:compileDebugKotlin UP-TO-DATE\n> Task :app:processDebugJavaRes UP-TO-DATE\n> Task :app:compileDebugJavaWithJavac UP-TO-DATE\n> Task :app:bundleDebugClassesToCompileJar UP-TO-DATE\n> Task :app:dexBuilderDebug UP-TO-DATE\n> Task :app:mergeProjectDexDebug UP-TO-DATE\n> Task :app:mergeDebugJavaResource UP-TO-DATE\n> Task :app:packageDebug UP-TO-DATE\n> Task :app:createDebugApkListingFileRedirect UP-TO-DATE\n> Task :app:compileDebugAndroidTestKotlin\n> Task :app:processDebugAndroidTestJavaRes UP-TO-DATE\n> Task :app:mergeDebugAndroidTestJavaResource UP-TO-DATE\n> Task :app:compileDebugAndroidTestJavaWithJavac\n> Task :app:dexBuilderDebugAndroidTest\n> Task :app:mergeProjectDexDebugAndroidTest\n> Task :app:packageDebugAndroidTest\n> Task :app:createDebugAndroidTestApkListingFileRedirect UP-TO-DATE\n\n> Task :app:connectedDebugAndroidTest\nRunning tests on devices: Medium_Phone_API_37.0(AVD) - 17\n\nBUILD SUCCESSFUL in 42s\n72 actionable tasks: 7 executed, 65 up-to-date\nConfiguration cache entry stored.\n",
+    "stderr": "WARNING: A terminally deprecated method in sun.misc.Unsafe has been called\nWARNING: sun.misc.Unsafe::arrayBaseOffset has been called by com.google.protobuf.UnsafeUtil$MemoryAccessor (file:/D:/development/Android/gradle/caches/modules-2/files-2.1/com.google.protobuf/protobuf-java/3.25.5/5ae5c9ec39930ae9b5a61b32b93288818ec05ec1/protobuf-java-3.25.5.jar)\nWARNING: Please consider reporting this to the maintainers of class com.google.protobuf.UnsafeUtil$MemoryAccessor\nWARNING: sun.misc.Unsafe::arrayBaseOffset will be removed in a future release\n",
+    "exit": 0
+  },
+  {
+    "timestamp_utc": "2026-11-10T12:34:31.788829+00:00",
+    "label": "FIXTURE_CLEANUP",
+    "command": [
+      "ssh",
+      "-i",
+      "C:/Users/Administrator/.ssh/wellora-backend-root",
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=yes",
+      "root@114.116.233.113",
+      "docker cp /opt/wellora/server/cleanup_android_fixtures.py server-api-1:/tmp/cleanup_android_fixtures.py && docker exec -e PYTHONPATH=/app server-api-1 python /tmp/cleanup_android_fixtures.py"
+    ],
+    "stdout": "REMOVED_RESERVED_ANDROID_FIXTURE_ACCOUNTS=6\naccounts=0\nprofiles=0\nsessions=0\nlogin_throttles=1\n",
+    "stderr": "",
+    "exit": 0
+  },
+  {
+    "timestamp_utc": "2026-11-10T12:36:31.434868+00:00",
+    "label": "HTTPS_FIXTURE_THROTTLE_CLEANUP",
+    "command": [
+      "ssh",
+      "-i",
+      "C:/Users/Administrator/.ssh/wellora-backend-root",
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=yes",
+      "root@114.116.233.113",
+      "docker exec server-db-1 psql -U wellora -d wellora -c \\",
+      "delete",
+      "from",
+      "login_throttles",
+      "where",
+      "key",
+      "=",
+      "777b09961b932ee5056c91d8157e6c85a02fdf9986fc64fab3fc52f57a359a9d"
+    ],
+    "stdout": "",
+    "stderr": "psql: warning: extra command-line argument \"from\" ignored\npsql: warning: extra command-line argument \"login_throttles\" ignored\npsql: warning: extra command-line argument \"where\" ignored\npsql: warning: extra command-line argument \"key\" ignored\npsql: warning: extra command-line argument \"=\" ignored\npsql: warning: extra command-line argument \"777b09961b932ee5056c91d8157e6c85a02fdf9986fc64fab3fc52f57a359a9d\" ignored\nERROR:  syntax error at end of input\nLINE 1:  delete\n               ^\n",
+    "exit": 1
+  },
+  {
+    "timestamp_utc": "2026-11-10T12:36:43.076478+00:00",
+    "label": "HTTPS_FIXTURE_THROTTLE_CLEANUP_RETRY",
+    "command": [
+      "ssh",
+      "-i",
+      "C:/Users/Administrator/.ssh/wellora-backend-root",
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=yes",
+      "root@114.116.233.113",
+      "docker exec server-db-1 psql -U wellora -d wellora -c \"delete from login_throttles where key = '777b09961b932ee5056c91d8157e6c85a02fdf9986fc64fab3fc52f57a359a9d'; select count(*) from login_throttles;\""
+    ],
+    "stdout": "DELETE 1\n count \n-------\n     0\n(1 row)\n\n",
+    "stderr": "",
+    "exit": 0
+  }
+]
