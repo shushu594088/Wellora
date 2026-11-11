@@ -1,0 +1,36 @@
+[
+  {
+    "recorded_utc": "2026-11-11T01:54:20.816347+00:00",
+    "client_date": "2026-11-11",
+    "timezone": "Asia/Shanghai",
+    "source": "user explicit reply",
+    "user_reply": "能打开，显示 ok",
+    "phone_browser_health": "USER_CONFIRMED_OK",
+    "local_recheck": {
+      "url": "https://took-gray-bernard-critics.trycloudflare.com/api/v1/health",
+      "status": 200,
+      "body": "{\"status\":\"ok\"}"
+    },
+    "apk_sha256": "0d116563b85dd614624b0e6b2f11a495b169eb73c86185844a568e93cbf2a019",
+    "app_registration_profile_relogin": "PENDING_USER_RESULT",
+    "roles_reopened": {
+      "MODIFIED_FILE.kt": {
+        "path": "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\android\\MODIFIED_FILE.kt",
+        "sha256": "6239e1384f82c10868c0512298dfb557722cc510626d5c95a95231aeef90ce22"
+      },
+      "DIFF_FILE.patch": {
+        "path": "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\android\\DIFF_FILE.patch",
+        "sha256": "a1a849b48595a917d45ae345e7e9fa01d5b9edfd55f0debd25f5f7677ef9e435"
+      },
+      "VERIFICATION.txt": {
+        "path": "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\android\\VERIFICATION.txt",
+        "sha256": "fa9634d40ff1b8b2f521ce4616ab4ac80414c0cd73a5a82da40c7b74bc6e9f93"
+      },
+      "ROLLBACK.sh": {
+        "path": "C:\\Users\\Administrator\\Desktop\\Wellora\\evidence\\transactions\\P017-backend\\android\\ROLLBACK.sh",
+        "sha256": "03720048a40201c337e9347f31d71f343f1e9cfb8bfb40a18941f3d54f18ac48"
+      }
+    },
+    "transaction_behavior_source": "existing VERIFICATION.txt; re-read only, not re-executed this turn"
+  }
+]
