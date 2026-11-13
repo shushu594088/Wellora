@@ -1,0 +1,101 @@
+{
+  "date_local": "2026-11-13 Asia/Shanghai",
+  "request": "自动完成测试后端",
+  "scope": "R003 basic profile, R014 account, R015 session foundation; not reports, consultation, medications, family sharing, production TLS, or physical-device acceptance",
+  "local": {
+    "pytest_command": "server/.venv/Scripts/python.exe -m pytest -q",
+    "pytest_exit": 0,
+    "pytest_result": "15 passed; 1 Starlette/httpx deprecation warning",
+    "alembic_roundtrip": "temporary SQLite DATABASE_URL; upgrade head, current, check, downgrade base, upgrade head",
+    "alembic_roundtrip_exit": 0,
+    "compose_config_command": "docker compose --env-file .env.example config --quiet",
+    "compose_config_exit": 0,
+    "deployment_smoke_source_sha256_before": "FD2C5F53F15BCD16A248317C7E594B41009AD441AAF1F82DC8203A4D84C9C2E2",
+    "deployment_smoke_source_sha256_after": "96AE7EFF2258AF0F8339925168FFD869599B87EBD625BF7AF684CAC3E3EF4DF3"
+  },
+  "changes": {
+    "file": "server/tests/deployment_smoke.py",
+    "behavior": "verify waits up to 30 one-second attempts for /api/v1/health to return 200 before checking restart persistence; URL/network errors and not-ready responses retry; timeout raises an error",
+    "unit_test": "server/tests/test_app.py::test_deployment_smoke_waits_for_health_after_restart",
+    "api_contract_changed": false,
+    "database_migration_added": false,
+    "remote_source_sha256": "96AE7EFF2258AF0F8339925168FFD869599B87EBD625BF7AF684CAC3E3EF4DF3",
+    "deployed_api_image_digest": "sha256:3cd16fc1e820940b83703a6180920a3f51dcb91f6d51caf4f3db548e9e3b6104"
+  },
+  "remote_attempts": [
+    {
+      "step": "first smoke precondition",
+      "exit": 1,
+      "cause": "the existing database contained 15 precisely named reserved android18_ fixtures; deployment_smoke.py requires zero accounts",
+      "mutation": "none; precondition stopped before prepare",
+      "correction": "ran repository cleanup_android_fixtures.py; it removed exactly 15 full-regex-matching random test accounts and cascaded records"
+    },
+    {
+      "step": "first PostgreSQL restart verify",
+      "exit": 1,
+      "cause": "Uvicorn had not started listening when verify immediately requested /health; ConnectionRefusedError",
+      "cleanup": "EXIT trap ran deployment_smoke.py cleanup and removed the generated smoke fixture",
+      "correction": "added bounded health readiness wait and a unit test; rebuilt and redeployed the API test image"
+    },
+    {
+      "step": "corrected PostgreSQL prepare/restart/verify/cleanup",
+      "exit": 0,
+      "results": [
+        "FRESH_POSTGRES_DATABASE=PASS",
+        "HEALTH=PASS",
+        "REGISTER_A=PASS",
+        "REGISTER_B=PASS",
+        "CREATE_PROFILE=PASS",
+        "OTHER_ACCOUNT_READ=PASS",
+        "OTHER_ACCOUNT_UPDATE=PASS",
+        "OTHER_ACCOUNT_LIST=PASS",
+        "UPDATE_PROFILE=PASS",
+        "STALE_VERSION=PASS",
+        "LOGOUT=PASS",
+        "REVOKED_SESSION=PASS",
+        "CONCURRENT_LAST_ACCOUNT_SLOT=PASS",
+        "ACCOUNT_LIMIT=PASS",
+        "POST_RESTART_HEALTH=PASS",
+        "POST_RESTART_PROFILE=PASS",
+        "POST_RESTART_REVOCATION=PASS",
+        "POST_RESTART_ACCOUNT_COUNT=PASS",
+        "FIXTURE_ACCOUNTS_REMOVED=PASS",
+        "FIXTURE_STATE_REMOVED"
+      ],
+      "alembic_current": "0001 (head)",
+      "alembic_check": "No new upgrade operations detected.",
+      "final_counts": {
+        "accounts": 0,
+        "profiles": 0,
+        "sessions": 0,
+        "login_throttles": 1
+      },
+      "note": "One shared IP throttle row is not tied to this test account set and was deliberately retained."
+    }
+  ],
+  "android_https": {
+    "command": ":app:connectedDebugAndroidTest -PwelloraApiBaseUrl=https://took-gray-bernard-critics.trycloudflare.com '-Pandroid.testInstrumentationRunnerArguments.wellora.serverTest=true' --console=plain",
+    "device": "Medium Phone API 37 AVD",
+    "initial_no_device_attempt_exit": 1,
+    "retry_after_starting_avd_exit": 0,
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "report": "evidence/raw/P020-connected-android-test.xml",
+    "report_sha256": "62F16EC1703530063CA1A24FA6AB66C22837972078D266D4E54172A604EE75F7",
+    "cleanup": "removed exactly 3 newly generated random android18_ accounts; final accounts/profiles/sessions remained zero"
+  },
+  "final_deployment_state": {
+    "api": "running; no host-published ports",
+    "postgres": "running and healthy; no host-published port",
+    "quick_tunnel": "running, restart=no; intentionally left active for pending physical-phone acceptance",
+    "health": "GET /api/v1/health returned {\"status\":\"ok\"} over HTTPS, HTTP 200",
+    "real_phone_business_acceptance": "pending; not claimed"
+  },
+  "execution_failures_and_non_mutating_corrections": [
+    "An initial local alembic current without DATABASE_URL exited 1 (DATABASE_URL must be set); retry with temporary SQLite DATABASE_URL passed round-trip migration checks.",
+    "An early PowerShell SQL quoting attempt failed before query execution; later read-only and smoke queries succeeded.",
+    "An Android test invocation exited 1 because ADB had no connected device; the configured Medium Phone AVD was started and the test rerun successfully."
+  ]
+}

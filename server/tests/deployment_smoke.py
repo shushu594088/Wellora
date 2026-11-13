@@ -10,7 +10,8 @@ import os
 from pathlib import Path
 import secrets
 import sys
-from urllib.error import HTTPError
+import time
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from sqlalchemy import delete, func, select
@@ -39,6 +40,20 @@ def check(label, actual, expected):
     if actual != expected:
         raise AssertionError(f'{label}: expected {expected!r}, got {actual!r}')
     print(label + '=PASS', flush=True)
+
+
+def wait_for_health(attempts=30):
+    expected = (200, {'status': 'ok'})
+    for attempt in range(attempts):
+        try:
+            result = request('GET', '/health')
+            if result == expected:
+                return result
+        except URLError:
+            pass
+        if attempt + 1 < attempts:
+            time.sleep(1)
+    raise RuntimeError('API did not become healthy after restart')
 
 
 def prepare():
@@ -89,7 +104,7 @@ def prepare():
 
 def verify():
     state = json.loads(STATE.read_text(encoding='utf-8'))
-    check('POST_RESTART_HEALTH', request('GET', '/health'), (200, {'status': 'ok'}))
+    check('POST_RESTART_HEALTH', wait_for_health(), (200, {'status': 'ok'}))
     code, profile = request('GET', state['profile_path'], token=state['token'])
     check('POST_RESTART_PROFILE', (code, profile['display_name'], profile['version'], profile['birth_date']),
           (200, 'Updated fictional fixture', 2, '1980-01-01'))

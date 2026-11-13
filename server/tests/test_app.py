@@ -2,6 +2,7 @@ import importlib.util
 import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from urllib.error import URLError
 
 import pytest
 from fastapi.testclient import TestClient
@@ -189,3 +190,20 @@ def test_health_check_does_not_disclose_configuration(client):
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
     assert response.headers["Cache-Control"] == "no-store"
+
+
+def test_deployment_smoke_waits_for_health_after_restart(monkeypatch):
+    smoke_spec = importlib.util.spec_from_file_location("deployment_smoke", Path(__file__).with_name("deployment_smoke.py"))
+    smoke = importlib.util.module_from_spec(smoke_spec)
+    smoke_spec.loader.exec_module(smoke)
+    results = iter([URLError("connection refused"), (503, {"status": "starting"}), (200, {"status": "ok"})])
+
+    def fake_request(*args, **kwargs):
+        result = next(results)
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    monkeypatch.setattr(smoke, "request", fake_request)
+    monkeypatch.setattr(smoke.time, "sleep", lambda _: None)
+    assert smoke.wait_for_health() == (200, {"status": "ok"})
