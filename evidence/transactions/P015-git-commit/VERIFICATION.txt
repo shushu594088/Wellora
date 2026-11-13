@@ -73,3 +73,8 @@ A evidence/prompts/P015.md
 A evidence/transactions/P015-git-commit/{BASELINE_FILE,MODIFIED_FILE,DIFF_FILE.patch,ROLLBACK.sh,VERIFICATION.txt,verify_rules.py}
 A evidence/transactions/P015-git-rules/{BASELINE_FILE,MODIFIED_FILE,DIFF_FILE.patch,ROLLBACK.sh,VERIFICATION.txt}
 No .idea, Kotlin/Android source, build output, P018/P019 or other UI/server changes are staged. `git diff --cached --name-status`, `git diff --cached --stat` and complete staged diff were inspected; staged-only `git diff --cached --check` exits 0. No Gradle tests run because no app code changed.
+
+POST-PUSH REMOTE RECHECK:
+A later standard `git ls-remote --heads origin main` request returned a Schannel TLS handshake error; the initial call did not capture the numeric exit code. `gh api repos/shushu594088/Wellora/branches/main --jq .commit.sha` returned EOF; its numeric exit code was not captured. These checks do not override the successful push-time SHA match recorded above. Changed transport command `git -c http.sslBackend=openssl -c http.version=HTTP/1.1 ls-remote origin refs/heads/main` exited 0 and returned `81ba65237aa8765976dc8ba8a038cd99a8a0b8bb refs/heads/main`, matching local HEAD. A changed standard `git ls-remote --heads origin main` retry exited 0 and returned the same SHA.
+POST-PUSH EVIDENCE STAGING HELPER RETRY:
+First helper exited 1 with `IndexError: list assignment index out of range`: the new log section was at EOF, while the helper attempted to replace `lines[i+1]`. No index update or commit resulted; explicitly staged P015 prompt/verification records remained staged. Corrected the staging transform to insert the record after the final push line, then rechecked that only P015 documentation/evidence paths were staged and ran `git diff --cached --check`.
