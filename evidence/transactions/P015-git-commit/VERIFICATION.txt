@@ -1,0 +1,75 @@
+TARGET: staged Git-policy snapshot of C:\Users\Administrator\Desktop\Wellora\AGENTS.md; HEAD baseline excludes the separate, uncommitted P007 MASTER gate.
+GOAL: add independently reviewable commit boundaries, traceability, pre-commit checks, and handoff/rollback rules.
+DATE: 2026-11-13 Asia/Shanghai.
+BASELINE SHA256: 3976B6235834FDF3BB4DA3F7288D750776F0CF68A08E92AB2F53A16892F499AE (9,678 bytes; obtained from git show HEAD:AGENTS.md).
+MODIFIED SHA256: D7CA3C6E1A7E51E5A69C80790500D891084FBB7A1E702B39729C4FB3F6963CA3 (12,710 bytes; baseline plus only the Git rules hunk).
+PATCH-RECONSTRUCTION SHA256: D7CA3C6E1A7E51E5A69C80790500D891084FBB7A1E702B39729C4FB3F6963CA3.
+ROLLBACK SHA256: 3976B6235834FDF3BB4DA3F7288D750776F0CF68A08E92AB2F53A16892F499AE.
+
+BOUND COMMAND (same on baseline, modified and rollback):
+python evidence/transactions/P015-git-commit/verify_rules.py <TARGET>
+
+BASELINE command exit 1 (expected negative result; four added headings absent).
+STDOUT:
+path=C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P015-git-commit\BASELINE_FILE
+bytes=9678
+git_heading=1
+granularity_heading=0
+traceability_heading=0
+precommit_heading=0
+handoff_heading=0
+STDERR: empty.
+
+MODIFIED command exit 0.
+STDOUT:
+path=C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P015-git-commit\MODIFIED_FILE
+bytes=12710
+git_heading=1
+granularity_heading=1
+traceability_heading=1
+precommit_heading=1
+handoff_heading=1
+STDERR: empty.
+
+PATCH reconstruction command: git -c core.autocrlf=false -c core.safecrlf=false -C REBUILD_DIR apply --unidiff-zero DIFF_FILE.patch
+EXIT: 0. STDOUT: empty. STDERR: empty.
+Reconstructed file hash exactly matches MODIFIED_FILE: D7CA3C6E1A7E51E5A69C80790500D891084FBB7A1E702B39729C4FB3F6963CA3. Structural checker on reconstructed file exits 0; all five headings report 1.
+
+ROLLBACK command: bash ROLLBACK.sh ROLLBACK_COPY
+EXIT: 0. STDOUT: empty. STDERR: empty.
+Restored file hash exactly matches BASELINE_FILE: 3976B6235834FDF3BB4DA3F7288D750776F0CF68A08E92AB2F53A16892F499AE. The same structural checker on restored file exits 1 (expected negative); output reports git_heading=1 and granularity_heading=0, traceability_heading=0, precommit_heading=0, handoff_heading=0. STDERR: empty.
+
+IDE ignore check command: git check-ignore -v .idea/misc.xml
+EXIT: 0. STDOUT: .gitignore:3:/.idea/\t.idea/misc.xml
+STDERR: empty.
+
+Verification note: an early controller invocation treated baseline/rollback checker exit 1 as unexpected and raised a PowerShell exception after printing the above expected-missing-heading outputs; no project files or Git index were changed by that exception. The corrected assertion matrix accepts baseline=1, modified=0, rollback=1 and confirmed both required hashes. Earlier line-ending reconstruction attempt and its retry are separately recorded in the P015-git-rules/VERIFICATION.txt history.
+
+`git diff --check -- AGENTS.md` previously exited 0 on the full source rule file. The final staged-only diff check and staged-scope audit are recorded in docs/开发记录.md before commit. No Android source change; no Gradle command run.
+
+ROLE PATHS:
+C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P015-git-commit\BASELINE_FILE
+C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P015-git-commit\MODIFIED_FILE
+C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P015-git-commit\DIFF_FILE.patch
+C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P015-git-commit\ROLLBACK.sh
+C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P015-git-commit\VERIFICATION.txt
+C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P015-git-commit\verify_rules.py
+STAGING GATE ERROR AND CORRECTION:
+First `git diff --cached --check` EXIT: 2.
+STDOUT:
+evidence/transactions/P015-git-commit/DIFF_FILE.patch:36: trailing whitespace.
+The reported line was a plus sign followed by one ASCII space.
+evidence/transactions/P015-git-rules/DIFF_FILE.patch:36: trailing whitespace.
+The reported line was a plus sign followed by one ASCII space.
+The staged audit also identified the two zero-context patch marker lines.
+A second `git diff --cached --check` attempt then exited 2 because the verification note above had copied the offending `+ ` lines literally; Git reported `evidence/transactions/P015-git-commit/VERIFICATION.txt:61` and `:63` as trailing whitespace. Replaced those literals with the whitespace-free description above; the final staged diff check exited 0.
+ Regenerated both patch files with Python `difflib.unified_diff(..., n=0)`; both patches were independently reapplied and reconstructed exact MODIFIED_FILE hashes. Retest `git diff --cached --check` EXIT: 0, no stdout/stderr. The source rule hunk was staged from the original tracked HEAD; the uncommitted P007 MASTER-gate hunk in AGENTS.md remains unstaged.
+
+Final staged paths at this gate:
+M .gitignore
+M AGENTS.md (only section 3 Git-rule hunk)
+M docs/开发记录.md (only P015 T022 row and 2026-11-13 continuation)
+A evidence/prompts/P015.md
+A evidence/transactions/P015-git-commit/{BASELINE_FILE,MODIFIED_FILE,DIFF_FILE.patch,ROLLBACK.sh,VERIFICATION.txt,verify_rules.py}
+A evidence/transactions/P015-git-rules/{BASELINE_FILE,MODIFIED_FILE,DIFF_FILE.patch,ROLLBACK.sh,VERIFICATION.txt}
+No .idea, Kotlin/Android source, build output, P018/P019 or other UI/server changes are staged. `git diff --cached --name-status`, `git diff --cached --stat` and complete staged diff were inspected; staged-only `git diff --cached --check` exits 0. No Gradle tests run because no app code changed.

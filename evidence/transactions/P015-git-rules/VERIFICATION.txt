@@ -1,0 +1,79 @@
+TARGET: C:\Users\Administrator\Desktop\Wellora\AGENTS.md
+GOAL: strengthen Git fine-grained commit boundaries, traceability, staging gates, correction policy, and handoff rules.
+BASELINE SHA256: 95FF812C14743A4CC0231147678B747B2BAD659740008E42777BCB11B2CA50B6
+MODIFIED SHA256: 2F440E704C558F747C10EC88BCBFF359152E09175845142B7BA7AD12F06EE63D
+PATCH-RECONSTRUCTION SHA256: 2F440E704C558F747C10EC88BCBFF359152E09175845142B7BA7AD12F06EE63D
+ROLLBACK SHA256: 95FF812C14743A4CC0231147678B747B2BAD659740008E42777BCB11B2CA50B6
+PATCH EXIT: 0
+PATCH STDOUT:
+
+PATCH STDERR:
+
+ROLLBACK EXIT: 0
+ROLLBACK STDOUT:
+
+ROLLBACK STDERR:
+
+BASELINE COMMAND: python check.py BASELINE_FILE
+BASELINE EXIT: 0
+BASELINE STDOUT:
+path=C:\Users\Administrator\AppData\Local\Temp\tmpymjiz9yd\BASELINE_FILE
+bytes=11802
+git_heading=1
+granularity_heading=0
+traceability_heading=0
+precommit_heading=0
+handoff_heading=0
+
+BASELINE STDERR:
+
+MODIFIED COMMAND: python check.py MODIFIED_FILE
+MODIFIED EXIT: 0
+MODIFIED STDOUT:
+path=C:\Users\Administrator\AppData\Local\Temp\tmpymjiz9yd\MODIFIED_FILE
+bytes=14834
+git_heading=1
+granularity_heading=1
+traceability_heading=1
+precommit_heading=1
+handoff_heading=1
+
+MODIFIED STDERR:
+
+ROLLBACK COMMAND: python check.py ROLLBACK_FILE
+ROLLBACK EXIT: 0
+ROLLBACK STDOUT:
+path=C:\Users\Administrator\AppData\Local\Temp\tmpymjiz9yd\ROLLBACK_COPY
+bytes=11802
+git_heading=1
+granularity_heading=0
+traceability_heading=0
+precommit_heading=0
+handoff_heading=0
+
+ROLLBACK STDERR:
+
+CHANGED SCOPE: AGENTS.md Git rules section 3; no application code changed by this request.
+ROLE FILES REOPENED:
+C:\Users\Administrator\Desktop\Wellora\AGENTS.md | 14834 bytes | SHA256 2F440E704C558F747C10EC88BCBFF359152E09175845142B7BA7AD12F06EE63D
+C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P015-git-rules\BASELINE_FILE | 11802 bytes | SHA256 95FF812C14743A4CC0231147678B747B2BAD659740008E42777BCB11B2CA50B6
+C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P015-git-rules\MODIFIED_FILE | 14834 bytes | SHA256 2F440E704C558F747C10EC88BCBFF359152E09175845142B7BA7AD12F06EE63D
+C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P015-git-rules\DIFF_FILE.patch | 5473 bytes | SHA256 77835832BBD3E91EB134108C77B999B88FAB7B1D59A024B325AD9A801B8B5ECF
+C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P015-git-rules\ROLLBACK.sh | 334 bytes | SHA256 D971BD9F699AA586C5F7ACA1CE90030DF6AF8977D0BB1C272307989A0AC3E0AF
+REVALIDATION 2026-11-13 (Asia/Shanghai)
+TARGET: C:\Users\Administrator\Desktop\Wellora\AGENTS.md
+Current target SHA256: 2F440E704C558F747C10EC88BCBFF359152E09175845142B7BA7AD12F06EE63D (matches MODIFIED_FILE).
+Current command: git diff --check -- AGENTS.md
+EXIT: 0
+STDOUT: (empty)
+STDERR: only Git LF-to-CRLF working-copy warnings.
+
+BASELINE recheck: python check.py BASELINE_FILE; EXIT 0; STDOUT: path=...\BASELINE_FILE; bytes=11802; git_heading=1; granularity_heading=0; traceability_heading=0; precommit_heading=0; handoff_heading=0; STDERR: (empty).
+MODIFIED recheck: python check.py MODIFIED_FILE; EXIT 0; STDOUT: path=...\MODIFIED_FILE; bytes=14834; git_heading=1; granularity_heading=1; traceability_heading=1; precommit_heading=1; handoff_heading=1; STDERR: (empty).
+
+PATCH attempt 1: git -C REBUILD_DIR apply --unidiff-zero DIFF_FILE.patch; command EXIT 0, STDOUT/STDERR empty, but reconstructed bytes were line-ending-converted (SHA256 A4B85729C005D728FDB514FF57C7E7E287B0EFABC081C6C77445ADC251BDE96B, 14933 bytes) instead of MODIFIED_FILE. Hash assertion failed and PowerShell reported a verification error. This was not accepted as a passing reconstruction.
+PATCH corrected: git -c core.autocrlf=false -c core.safecrlf=false -C REBUILD_DIR apply --unidiff-zero DIFF_FILE.patch; EXIT 0, STDOUT/STDERR empty; reconstructed SHA256 2F440E704C558F747C10EC88BCBFF359152E09175845142B7BA7AD12F06EE63D, matching MODIFIED_FILE. Structural checker EXIT 0; all five Git-rule checks returned 1 (present).
+
+ROLLBACK command: bash ROLLBACK.sh ROLLBACK_COPY; EXIT 0; STDOUT/STDERR empty; restored SHA256 95FF812C14743A4CC0231147678B747B2BAD659740008E42777BCB11B2CA50B6, matching BASELINE_FILE. Rollback checker EXIT 0; git_heading=1 and the four added rule headings=0.
+
+Observed baseline: Git heading present, four added granular-policy headings absent. Observed modified: all five headings present. Observed rollback: Git heading present, four added headings absent. All checker commands EXIT 0. No application code changed; no Gradle run.
