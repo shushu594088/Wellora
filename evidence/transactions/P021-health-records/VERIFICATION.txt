@@ -85,6 +85,7 @@ Same-input behavior rerun using `probe.py` (fictional account/profile, same body
 - BASELINE: stdout `{"body": {"detail": "Not Found"}, "status": 404}`; stderr contains the Starlette/httpx deprecation warning; exit 0; SHA-256 `9e7cc111aff321b94a9a432ad179f104b1d4dfbb4800ec5d03f612d1d481d7e6`.
 - MODIFIED (`server/app.py`): stdout returns the record with `value_state=unknown`, null content and HTTP 201; stderr contains the same deprecation warning; exit 0; SHA-256 `a1c3f25efecb3dea83043c6391b49c7f6b0a431ccdcb50ba0f2baa9a87ba49a9`, matching MODIFIED_FILE.py.
 - ROLLBACK on a separate TEMP copy of MODIFIED: stdout `RESTORED_PRISTINE_BASELINE`; stderr empty; exit 0; restored SHA-256 `9e7cc111aff321b94a9a432ad179f104b1d4dfbb4800ec5d03f612d1d481d7e6`, matching BASELINE_FILE.py.
+- Running the same `probe.py` command and input against that restored copy returned stdout `{"body": {"detail": "Not Found"}, "status": 404}`; stderr contained the Starlette/httpx deprecation warning; exit 0. This matches BASELINE behavior.
 - Reconstructed `server/app.py` from BASELINE_FILE.py with DIFF_FILE.patch in a temporary `server/` layout: `git apply --unidiff-zero --check` exit 0; apply exit 0; reconstructed SHA matches MODIFIED_FILE.py (`a1c3f25efecb3dea83043c6391b49c7f6b0a431ccdcb50ba0f2baa9a87ba49a9`).
 
 Follow-up tests and corrected command failures:
