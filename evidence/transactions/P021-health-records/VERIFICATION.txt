@@ -1,0 +1,94 @@
+P021 transaction verification — 2026-11-14 Asia/Shanghai
+Target: server/app.py
+Changed symbols: HealthRecord, IdempotencyKey, HealthRecordInput, list_health_records, create_health_record, update_health_record
+Input used by BASELINE and MODIFIED: a fresh in-memory SQLite DB; register/login a fictional account; create a fictional profile; POST {"kind":"allergy","value_state":"unknown","content":null,"source_type":"user_statement"} with Idempotency-Key: probe-1.
+
+ROLE FILES
+BASELINE_FILE.py: C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P021-health-records\BASELINE_FILE.py
+MODIFIED_FILE.py: C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P021-health-records\MODIFIED_FILE.py
+DIFF_FILE.patch: C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P021-health-records\DIFF_FILE.patch
+VERIFICATION.txt: C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P021-health-records\VERIFICATION.txt
+ROLLBACK.sh: C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P021-health-records\ROLLBACK.sh
+Supporting reproducible probe: C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P021-health-records\probe.py
+
+BASELINE
+Command: C:\Users\Administrator\Desktop\Wellora\server\.venv\Scripts\python.exe C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P021-health-records\probe.py C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P021-health-records\BASELINE_FILE.py
+stdout: {"body": {"detail": "Not Found"}, "status": 404}
+stderr: C:\Users\Administrator\Desktop\Wellora\server\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+exit: 0
+SHA-256: 9e7cc111aff321b94a9a432ad179f104b1d4dfbb4800ec5d03f612d1d481d7e6
+
+MODIFIED
+Command: C:\Users\Administrator\Desktop\Wellora\server\.venv\Scripts\python.exe C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P021-health-records\probe.py C:\Users\Administrator\Desktop\Wellora\server\app.py
+stdout: {"body": {"actor_id": "7eabd3ee-0172-439a-9d73-dbb607daf820", "confirmed_at": "2026-11-14T03:20:01.603063+00:00", "content": null, "created_at": "2026-11-14T03:20:01.605719+00:00", "kind": "allergy", "profile_id": "df2dcac9-9285-4f97-8336-2a80a66731e2", "record_id": "d8322738-5998-416e-993d-90fc51696289", "source_file_id": null, "source_type": "user_statement", "value_state": "unknown", "version": 1}, "status": 201}
+stderr: C:\Users\Administrator\Desktop\Wellora\server\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+exit: 0
+SHA-256: a1c3f25efecb3dea83043c6391b49c7f6b0a431ccdcb50ba0f2baa9a87ba49a9
+bytes: 22727
+
+AUTOMATED TESTS
+Command: C:\Users\Administrator\Desktop\Wellora\server\.venv\Scripts\python.exe -m pytest -q (cwd server)
+stdout:
+..................                                                       [100%]
+============================== warnings summary ==============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\Administrator\Desktop\Wellora\server\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+18 passed, 1 warning in 4.57s
+stderr: (empty)
+exit: 0
+
+MIGRATION ROUND TRIP (one temporary SQLite DATABASE_URL shared across commands)
+`python -m alembic upgrade head` — stdout (empty); stderr (empty); exit 0
+`python -m alembic current` — stdout `0002 (head)`; stderr (empty); exit 0
+`python -m alembic check` — stdout `No new upgrade operations detected.`; stderr (empty); exit 0
+`python -m alembic downgrade base` — stdout (empty); stderr (empty); exit 0
+`python -m alembic upgrade head` — stdout (empty); stderr (empty); exit 0
+`python -m compileall -q app.py tests/test_app.py migrations/versions/0002_health_records.py` — stdout (empty); stderr (empty); exit 0
+
+PATCH RECONSTRUCTION
+Command: `git -c core.autocrlf=false apply --unidiff-zero --check evidence/transactions/P021-health-records/DIFF_FILE.patch` in an isolated temporary directory containing BASELINE_FILE.py as server/app.py
+stdout: (empty); stderr: (empty); exit 0
+Command: `git -c core.autocrlf=false apply --unidiff-zero evidence/transactions/P021-health-records/DIFF_FILE.patch` in that directory
+stdout: (empty); stderr: (empty); exit 0
+Reconstructed SHA-256: a1c3f25efecb3dea83043c6391b49c7f6b0a431ccdcb50ba0f2baa9a87ba49a9
+Matches MODIFIED_FILE.py: yes
+
+ROLLBACK
+Command: `C:\Program Files\Git\bin\bash.exe --noprofile --norc evidence/transactions/P021-health-records/ROLLBACK.sh <separate copy of MODIFIED_FILE.py>`
+stdout: RESTORED_PRISTINE_BASELINE
+stderr: (empty)
+exit: 0
+Restored SHA-256: 9e7cc111aff321b94a9a432ad179f104b1d4dfbb4800ec5d03f612d1d481d7e6
+Matches BASELINE_FILE.py: yes
+
+DEBUGGING / FAILED ATTEMPTS
+1. Before timestamp normalization, first run of `test_health_record_create_is_idempotent_and_rejects_key_reuse` exited 1: 17 passed, 1 failed. Assertion showed original SQLite response timestamp `2026-11-14T03:06:27.167476` but replay snapshot `2026-11-14T03:06:27.167476+00:00` (same for `confirmed_at`). Correction: normalize response timestamps to UTC ISO-8601. Rerun: 18 passed, exit 0.
+2. First modified behavior probe omitted required `Idempotency-Key` and returned 422 `INVALID_INPUT` (probe process exit 0). Correction: both comparison runs now send `Idempotency-Key: probe-1`; final baseline 404 and modified 201.
+3. An initial migration capture harness mistakenly assigned a new temporary SQLite DB to each Alembic command; it stopped at `ALEMBIC_check` with subprocess return `-1` (PowerShell displayed 4294967295), no result claimed. Corrected to one shared temporary DATABASE_URL; the complete round trip above passed.
+4. One shell invocation was rejected before execution while attempting to reuse and pre-delete a temp DB; changed to a unique temp path without pre-cleanup. No project file or database was modified by the rejected invocation.
+5. Local Docker info exit 1: `failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.`
+6. Initial `git diff --cached --check` exited 2 because the standard unified patch represented blank lines as whitespace-only context. Recreated the transaction patch with zero context; `git apply --unidiff-zero --check` and reconstruction passed, and the corrected staged check is recorded at delivery.
+7. Server read-only SSH status command exit 255: `root@114.116.233.113: Permission denied (publickey,password).` No remote command ran; server files, database and active services were not changed.
+
+FINAL STATE
+No real medical data or third-party provider request was used. SQLite migration is verified; PostgreSQL 0002 deployment remains pending restored SSH access. The existing target-server API was not modified in this task. Project `server/app.py` SHA-256 equals MODIFIED_FILE.py. Backend `git diff --check` exited 0.
+
+FOLLOW-UP VERIFICATION (2026-11-14)
+Reopened BASELINE_FILE.py, MODIFIED_FILE.py, DIFF_FILE.patch, VERIFICATION.txt and ROLLBACK.sh from their absolute project paths.
+
+Same-input behavior rerun using `probe.py` (fictional account/profile, same body and Idempotency-Key):
+- BASELINE: stdout `{"body": {"detail": "Not Found"}, "status": 404}`; stderr contains the Starlette/httpx deprecation warning; exit 0; SHA-256 `9e7cc111aff321b94a9a432ad179f104b1d4dfbb4800ec5d03f612d1d481d7e6`.
+- MODIFIED (`server/app.py`): stdout returns the record with `value_state=unknown`, null content and HTTP 201; stderr contains the same deprecation warning; exit 0; SHA-256 `a1c3f25efecb3dea83043c6391b49c7f6b0a431ccdcb50ba0f2baa9a87ba49a9`, matching MODIFIED_FILE.py.
+- ROLLBACK on a separate TEMP copy of MODIFIED: stdout `RESTORED_PRISTINE_BASELINE`; stderr empty; exit 0; restored SHA-256 `9e7cc111aff321b94a9a432ad179f104b1d4dfbb4800ec5d03f612d1d481d7e6`, matching BASELINE_FILE.py.
+- Reconstructed `server/app.py` from BASELINE_FILE.py with DIFF_FILE.patch in a temporary `server/` layout: `git apply --unidiff-zero --check` exit 0; apply exit 0; reconstructed SHA matches MODIFIED_FILE.py (`a1c3f25efecb3dea83043c6391b49c7f6b0a431ccdcb50ba0f2baa9a87ba49a9`).
+
+Follow-up tests and corrected command failures:
+1. Running pytest from the repository root returned 1 failure / 17 passed because the pre-existing `test_deployment_smoke_waits_for_health_after_restart` imports `app` as a top-level module while the command had root rather than `server` as cwd. No code changed; rerunning from `server/` with `.\.venv\Scripts\python.exe -m pytest -q` returned 18 passed, 0 failed, with one Starlette/httpx deprecation warning.
+2. The first cwd-corrected invocation mistakenly used `..\.venv\Scripts\python.exe`; PowerShell could not resolve it (exit 1). Changing to `.\.venv\Scripts\python.exe` fixed the executable path.
+3. An additional Alembic check used `sqlite:///../data/p021-verify.sqlite3` from `server/`, but that directory did not exist; SQLite raised `OperationalError: unable to open database file` (exit 1). Repeating upgrade/current/check/downgrade base/upgrade against a unique SQLite file under `%TEMP%` completed with exits `0/0/0/0/0`; `current` printed `0002 (head)`, and `check` printed `No new upgrade operations detected.`; the temporary database file was removed.
+4. A follow-up patch reconstruction was first invoked from the repository root rather than its isolated temp root; `git apply --check` and apply each returned 1 (`patch does not apply`). The next call used a relative patch path that was unavailable from the temp cwd and returned 128. Correcting both to `git -C <temp-root>` and the absolute patch path returned 0 for check/apply and produced the exact MODIFIED_FILE.py SHA above. No repository source was changed by the failed isolated reconstruction attempts.

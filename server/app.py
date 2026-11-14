@@ -1,17 +1,20 @@
+import base64
 import hashlib
+import json
 import os
 import re
 import secrets
 import uuid
 from datetime import date, datetime, timedelta, timezone
+from typing import Literal
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pwdlib import PasswordHash
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, create_engine, func, select, text, update
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, and_, create_engine, delete, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 
@@ -71,6 +74,36 @@ class Profile(Base):
     version: Mapped[int] = mapped_column(Integer, default=1)
 
 
+class HealthRecord(Base):
+    __tablename__ = "health_records"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    profile_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[str] = mapped_column(String(64))
+    value_state: Mapped[str] = mapped_column(String(16))
+    content: Mapped[str | None] = mapped_column(Text, nullable=True)
+    source_type: Mapped[str] = mapped_column(String(32))
+    source_file_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    actor_id: Mapped[str] = mapped_column(ForeignKey("accounts.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+
+
+class IdempotencyKey(Base):
+    __tablename__ = "idempotency_keys"
+    __table_args__ = (UniqueConstraint("account_id", "scope", "key", name="uq_idempotency_account_scope_key"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    account_id: Mapped[str] = mapped_column(ForeignKey("accounts.id", ondelete="CASCADE"), index=True)
+    scope: Mapped[str] = mapped_column(String(96))
+    key: Mapped[str] = mapped_column(String(128))
+    request_hash: Mapped[str] = mapped_column(String(64))
+    resource_id: Mapped[str] = mapped_column(ForeignKey("health_records.id", ondelete="CASCADE"))
+    response_snapshot: Mapped[str] = mapped_column(Text)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class RegisterInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     username: str = Field(min_length=3, max_length=32)
@@ -110,6 +143,27 @@ class ProfileInput(BaseModel):
 
 
 class ProfileUpdate(ProfileInput):
+    version: int = Field(ge=1)
+
+
+class HealthRecordInput(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
+    kind: str = Field(min_length=1, max_length=64)
+    value_state: Literal["unknown", "none", "recorded"]
+    content: str | None = None
+    source_type: Literal["user_statement", "doctor_conclusion", "ai_explanation"]
+
+    @model_validator(mode="after")
+    def content_matches_state(self):
+        if self.value_state == "recorded" and not self.content:
+            raise ValueError("recorded values require content")
+        if self.value_state != "recorded" and self.content:
+            raise ValueError("unknown and none values cannot include content")
+        return self
+
+
+class HealthRecordUpdate(HealthRecordInput):
     version: int = Field(ge=1)
 
 
@@ -156,6 +210,56 @@ def profile_result(profile: Profile) -> dict:
         "birth_date": profile.birth_date,
         "version": profile.version,
     }
+
+
+def health_record_result(record: HealthRecord) -> dict:
+    return {
+        "record_id": record.id,
+        "profile_id": record.profile_id,
+        "kind": record.kind,
+        "value_state": record.value_state,
+        "content": record.content,
+        "source_type": record.source_type,
+        "source_file_id": record.source_file_id,
+        "actor_id": record.actor_id,
+        "created_at": utc(record.created_at).isoformat(),
+        "confirmed_at": utc(record.confirmed_at).isoformat() if record.confirmed_at else None,
+        "version": record.version,
+    }
+
+
+def health_record_snapshot(record: HealthRecord) -> str:
+    result = health_record_result(record)
+    return json.dumps(result, ensure_ascii=False, separators=(",", ":"))
+
+
+def record_cursor(record: HealthRecord) -> str:
+    raw = json.dumps([utc(record.created_at).isoformat(), record.id], separators=(",", ":"))
+    return base64.urlsafe_b64encode(raw.encode("utf-8")).decode("ascii").rstrip("=")
+
+
+def parse_record_cursor(cursor: str) -> tuple[datetime, str]:
+    try:
+        raw = base64.urlsafe_b64decode(cursor + "=" * (-len(cursor) % 4))
+        timestamp, record_id = json.loads(raw)
+        return utc(datetime.fromisoformat(timestamp)), str(uuid.UUID(record_id))
+    except (ValueError, TypeError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=422, detail="INVALID_CURSOR") from exc
+
+
+def record_request_hash(profile_id: str, payload: HealthRecordInput) -> str:
+    request = json.dumps(
+        {"profile_id": profile_id, **payload.model_dump(mode="json")},
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(request.encode("utf-8")).hexdigest()
+
+
+def remove_expired_idempotency_keys(db: Session, now: datetime) -> None:
+    result = db.execute(delete(IdempotencyKey).where(IdempotencyKey.expires_at <= now))
+    if result.rowcount:
+        db.commit()
 
 
 app = FastAPI(title="Wellora API", version="0.1.0")
@@ -320,3 +424,137 @@ def update_profile(
     db.commit()
     db.refresh(profile)
     return profile_result(profile)
+
+
+@app.get("/api/v1/profiles/{profile_id}/records")
+def list_health_records(
+    profile_id: uuid.UUID,
+    limit: int = Query(default=20, ge=1, le=100),
+    cursor: str | None = Query(default=None, max_length=512),
+    account: Account = Depends(account_from_bearer),
+    db: Session = Depends(get_db),
+):
+    profile = db.scalar(select(Profile).where(
+        Profile.id == str(profile_id), Profile.owner_account_id == account.id,
+    ))
+    if profile is None:
+        raise HTTPException(status_code=404, detail="PROFILE_NOT_FOUND")
+
+    remove_expired_idempotency_keys(db, datetime.now(timezone.utc))
+    query = select(HealthRecord).where(HealthRecord.profile_id == profile.id)
+    if cursor:
+        created_at, record_id = parse_record_cursor(cursor)
+        query = query.where(or_(
+            HealthRecord.created_at < created_at,
+            and_(HealthRecord.created_at == created_at, HealthRecord.id < record_id),
+        ))
+    rows = list(db.scalars(query.order_by(
+        HealthRecord.created_at.desc(), HealthRecord.id.desc(),
+    ).limit(limit + 1)))
+    has_more = len(rows) > limit
+    items = rows[:limit]
+    return {
+        "items": [health_record_result(record) for record in items],
+        "next_cursor": record_cursor(items[-1]) if has_more else None,
+    }
+
+
+@app.post("/api/v1/profiles/{profile_id}/records", status_code=201)
+def create_health_record(
+    profile_id: uuid.UUID,
+    payload: HealthRecordInput,
+    idempotency_key: str = Header(alias="Idempotency-Key", min_length=1, max_length=128),
+    account: Account = Depends(account_from_bearer),
+    db: Session = Depends(get_db),
+):
+    profile = db.scalar(select(Profile).where(
+        Profile.id == str(profile_id), Profile.owner_account_id == account.id,
+    ))
+    if profile is None:
+        raise HTTPException(status_code=404, detail="PROFILE_NOT_FOUND")
+
+    now = datetime.now(timezone.utc)
+    remove_expired_idempotency_keys(db, now)
+    scope = f"health-record:create:{profile.id}"
+    request_hash = record_request_hash(profile.id, payload)
+    key = db.scalar(select(IdempotencyKey).where(
+        IdempotencyKey.account_id == account.id,
+        IdempotencyKey.scope == scope,
+        IdempotencyKey.key == idempotency_key,
+    ))
+    if key is not None and utc(key.expires_at) > now:
+        if key.request_hash != request_hash:
+            raise HTTPException(status_code=409, detail="IDEMPOTENCY_CONFLICT")
+        return json.loads(key.response_snapshot)
+    if key is not None:
+        db.delete(key)
+        db.flush()
+
+    record = HealthRecord(
+        profile_id=profile.id,
+        kind=payload.kind,
+        value_state=payload.value_state,
+        content=payload.content if payload.value_state == "recorded" else None,
+        source_type=payload.source_type,
+        source_file_id=None,
+        actor_id=account.id,
+        confirmed_at=now if payload.source_type != "ai_explanation" else None,
+    )
+    db.add(record)
+    db.flush()
+    db.add(IdempotencyKey(
+        account_id=account.id,
+        scope=scope,
+        key=idempotency_key,
+        request_hash=request_hash,
+        resource_id=record.id,
+        response_snapshot=health_record_snapshot(record),
+        expires_at=now + timedelta(hours=24),
+    ))
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        existing_key = db.scalar(select(IdempotencyKey).where(
+            IdempotencyKey.account_id == account.id,
+            IdempotencyKey.scope == scope,
+            IdempotencyKey.key == idempotency_key,
+        ))
+        if existing_key is None or utc(existing_key.expires_at) <= now:
+            raise HTTPException(status_code=409, detail="IDEMPOTENCY_CONFLICT") from exc
+        if existing_key.request_hash != request_hash:
+            raise HTTPException(status_code=409, detail="IDEMPOTENCY_CONFLICT") from exc
+        return json.loads(existing_key.response_snapshot)
+    db.refresh(record)
+    return health_record_result(record)
+
+
+@app.patch("/api/v1/records/{record_id}")
+def update_health_record(
+    record_id: uuid.UUID,
+    payload: HealthRecordUpdate,
+    account: Account = Depends(account_from_bearer),
+    db: Session = Depends(get_db),
+):
+    record = db.scalar(select(HealthRecord).join(Profile).where(
+        HealthRecord.id == str(record_id), Profile.owner_account_id == account.id,
+    ))
+    if record is None:
+        raise HTTPException(status_code=404, detail="RECORD_NOT_FOUND")
+
+    remove_expired_idempotency_keys(db, datetime.now(timezone.utc))
+    values = payload.model_dump(exclude={"version"})
+    values["content"] = payload.content if payload.value_state == "recorded" else None
+    values["actor_id"] = account.id
+    values["confirmed_at"] = datetime.now(timezone.utc) if payload.source_type != "ai_explanation" else None
+    result = db.execute(update(HealthRecord).where(
+        HealthRecord.id == str(record_id),
+        HealthRecord.profile_id == record.profile_id,
+        HealthRecord.version == payload.version,
+    ).values(**values, version=HealthRecord.version + 1))
+    if result.rowcount != 1:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="VERSION_CONFLICT")
+    db.commit()
+    db.refresh(record)
+    return health_record_result(record)

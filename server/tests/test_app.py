@@ -1,5 +1,6 @@
 import importlib.util
 import os
+import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.error import URLError
@@ -140,6 +141,121 @@ def test_profile_cannot_be_duplicated_or_have_blank_name(client):
     assert api.post("/api/v1/profiles", json={"display_name": "  "}, headers=headers).status_code == 422
     assert api.post("/api/v1/profiles", json={"display_name": "测试档案", "birth_date": "1980-01-01"}, headers=headers).status_code == 201
     assert api.post("/api/v1/profiles", json={"display_name": "第二份"}, headers=headers).status_code == 409
+
+
+def test_health_records_preserve_unknown_none_and_recorded_separately(client):
+    api, _ = client
+    owner = account(api)
+    headers = auth(owner["access_token"])
+    profile = api.post("/api/v1/profiles", json={"display_name": "测试档案"}, headers=headers).json()
+    url = f"/api/v1/profiles/{profile['profile_id']}/records"
+
+    unknown = api.post(url, headers={**headers, "Idempotency-Key": "unknown-1"}, json={
+        "kind": "allergy", "value_state": "unknown", "source_type": "user_statement",
+    })
+    none = api.post(url, headers={**headers, "Idempotency-Key": "none-1"}, json={
+        "kind": "allergy", "value_state": "none", "source_type": "user_statement",
+    })
+    recorded = api.post(url, headers={**headers, "Idempotency-Key": "recorded-1"}, json={
+        "kind": "diagnosis", "value_state": "recorded", "content": "虚构测试条目",
+        "source_type": "doctor_conclusion",
+    })
+
+    assert [unknown.status_code, none.status_code, recorded.status_code] == [201, 201, 201]
+    assert unknown.json()["value_state"] == "unknown" and unknown.json()["content"] is None
+    assert none.json()["value_state"] == "none" and none.json()["content"] is None
+    assert recorded.json()["content"] == "虚构测试条目"
+    assert recorded.json()["source_type"] == "doctor_conclusion"
+    assert recorded.json()["actor_id"] == owner["account_id"]
+    assert recorded.json()["confirmed_at"] is not None
+    ai = api.post(url, headers={**headers, "Idempotency-Key": "ai-1"}, json={
+        "kind": "explanation", "value_state": "recorded", "content": "模型示例文本",
+        "source_type": "ai_explanation",
+    })
+    assert ai.status_code == 201
+    assert ai.json()["confirmed_at"] is None
+
+    invalid = api.post(url, headers={**headers, "Idempotency-Key": "invalid-1"}, json={
+        "kind": "allergy", "value_state": "none", "content": "伪装成无过敏的病史",
+        "source_type": "user_statement",
+    })
+    unavailable_file = api.post(url, headers={**headers, "Idempotency-Key": "file-1"}, json={
+        "kind": "report", "value_state": "recorded", "content": "文件引用",
+        "source_type": "user_statement", "source_file_id": str(uuid.uuid4()),
+    })
+    assert invalid.status_code == 422
+    assert "伪装成无过敏的病史" not in invalid.text
+    assert unavailable_file.status_code == 422
+
+
+def test_health_record_create_is_idempotent_and_rejects_key_reuse(client):
+    api, factory = client
+    headers = auth(account(api)["access_token"])
+    profile = api.post("/api/v1/profiles", json={"display_name": "测试档案"}, headers=headers).json()
+    url = f"/api/v1/profiles/{profile['profile_id']}/records"
+    payload = {"kind": "allergy", "value_state": "recorded", "content": "花粉", "source_type": "user_statement"}
+    first = api.post(url, headers={**headers, "Idempotency-Key": "same-write"}, json=payload)
+    replay = api.post(url, headers={**headers, "Idempotency-Key": "same-write"}, json=payload)
+    conflict = api.post(url, headers={**headers, "Idempotency-Key": "same-write"}, json={**payload, "content": "青霉素"})
+
+    assert first.status_code == replay.status_code == 201
+    assert first.json()["record_id"] == replay.json()["record_id"]
+    assert conflict.status_code == 409
+    assert conflict.json()["error"]["code"] == "IDEMPOTENCY_CONFLICT"
+
+    record_url = f"/api/v1/records/{first.json()['record_id']}"
+    api.patch(record_url, headers=headers, json={
+        "kind": "allergy", "value_state": "recorded", "content": "修订后的内容",
+        "source_type": "user_statement", "version": 1,
+    })
+    replay_after_update = api.post(url, headers={**headers, "Idempotency-Key": "same-write"}, json=payload)
+    assert replay_after_update.json() == first.json()
+
+    with factory() as db:
+        key = db.scalar(select(module.IdempotencyKey))
+        key.expires_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+        db.commit()
+    after_expiry = api.post(url, headers={**headers, "Idempotency-Key": "same-write"}, json=payload)
+    assert after_expiry.status_code == 201
+    assert after_expiry.json()["record_id"] != first.json()["record_id"]
+
+
+def test_health_records_are_paginated_versioned_and_private(client):
+    api, _ = client
+    a, b = account(api, "record_owner"), account(api, "record_other")
+    headers_a, headers_b = auth(a["access_token"]), auth(b["access_token"])
+    profile_a = api.post("/api/v1/profiles", json={"display_name": "甲"}, headers=headers_a).json()
+    profile_b = api.post("/api/v1/profiles", json={"display_name": "乙"}, headers=headers_b).json()
+    url_a = f"/api/v1/profiles/{profile_a['profile_id']}/records"
+    url_b = f"/api/v1/profiles/{profile_b['profile_id']}/records"
+    ids = []
+    for index in range(3):
+        result = api.post(url_a, headers={**headers_a, "Idempotency-Key": f"record-{index}"}, json={
+            "kind": "test", "value_state": "recorded", "content": f"虚构{index}", "source_type": "user_statement",
+        })
+        assert result.status_code == 201
+        ids.append(result.json()["record_id"])
+
+    first_page = api.get(url_a, headers=headers_a, params={"limit": 2})
+    assert len(first_page.json()["items"]) == 2
+    assert first_page.json()["next_cursor"]
+    second_page = api.get(url_a, headers=headers_a, params={"limit": 2, "cursor": first_page.json()["next_cursor"]})
+    assert len(second_page.json()["items"]) == 1
+    assert set(ids) == {item["record_id"] for item in first_page.json()["items"] + second_page.json()["items"]}
+    assert api.get(url_b, headers=headers_b).json()["items"] == []
+
+    target = first_page.json()["items"][0]
+    record_url = f"/api/v1/records/{target['record_id']}"
+    assert api.patch(record_url, headers=headers_b, json={
+        "kind": "other", "value_state": "recorded", "content": "越权", "source_type": "user_statement", "version": 1,
+    }).status_code == 404
+    new_values = {"kind": "test", "value_state": "recorded", "content": "修订", "source_type": "user_statement"}
+    updated = api.patch(record_url, headers=headers_a, json={**new_values, "version": 1})
+    stale = api.patch(record_url, headers=headers_a, json={**new_values, "content": "旧版", "version": 1})
+    assert updated.status_code == 200 and updated.json()["version"] == 2
+    assert stale.status_code == 409
+    assert stale.json()["error"]["code"] == "VERSION_CONFLICT"
+    assert api.get(url_a, headers=headers_a, params={"limit": 0}).status_code == 422
 
 
 def test_login_locks_after_five_failures_then_recovers(client):
