@@ -1,0 +1,70 @@
+P022 local private-file API verification — 2026-11-14, Asia/Shanghai
+
+Scope: upload and authenticated download for fictional bytes only. No cloud account, Bucket, credential, public port, or server deployment was accessed.
+Target source: C:\Users\Administrator\Desktop\Wellora\server\app.py
+Changed routes: POST /api/v1/profiles/{profile_id}/files; GET /api/v1/files/{file_id}/content
+Changed symbols: ProfileFile, inspect_upload, file_result, upload_profile_file, download_profile_file, request_metadata
+Input for baseline/modified/rollback probe: a fresh SQLite database; fictional account `probe_user`; fictional profile; a small byte sequence with PNG signature, filename `probe.png`, and deliberately untrusted MIME `text/plain`.
+
+ROLE FILES
+BASELINE_FILE.py: C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P022-oss-files\BASELINE_FILE.py
+MODIFIED_FILE.py: C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P022-oss-files\MODIFIED_FILE.py
+DIFF_FILE.patch: C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P022-oss-files\DIFF_FILE.patch
+VERIFICATION.txt: C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P022-oss-files\VERIFICATION.txt
+ROLLBACK.sh: C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P022-oss-files\ROLLBACK.sh
+Supporting probe: C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P022-oss-files\probe.py
+
+BASELINE
+Command: server/.venv/Scripts/python.exe evidence/transactions/P022-oss-files/probe.py <absolute-server-directory> evidence/transactions/P022-oss-files/BASELINE_FILE.py (cwd repository root)
+stdout: {"error": "Not Found", "fields": ["detail"], "status": 404}
+stderr: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+exit: 0
+SHA-256: A1C3F25EFECB3DEA83043C6391B49C7F6B0A431CCDCB50BA0F2BAA9A87BA49A9; 22,727 bytes
+
+MODIFIED
+Command: server/.venv/Scripts/python.exe evidence/transactions/P022-oss-files/probe.py <absolute-server-directory> evidence/transactions/P022-oss-files/MODIFIED_FILE.py (cwd repository root)
+stdout: {"error": null, "fields": ["duplicate", "file_id", "sha256", "status"], "status": 201}
+stderr: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+exit: 0
+SHA-256: A3F1CD964520E6EA2135AF64468360BBF3FA89525CA89FE1A8D848B18E672FDE; 29,590 bytes
+
+ROLLBACK
+Command: copy MODIFIED_FILE.py to a separate ROLLBACK_COPY.py, then `C:\Program Files\Git\bin\bash.exe evidence/transactions/P022-oss-files/ROLLBACK.sh <absolute-rollback-copy-path>`; exit 0.
+Same probe stdout: {"error": "Not Found", "fields": ["detail"], "status": 404}
+Probe exit: 0. Restored copy SHA-256 equals baseline: A1C3F25EFECB3DEA83043C6391B49C7F6B0A431CCDCB50BA0F2BAA9A87BA49A9; 22,727 bytes.
+
+DIFF RECONSTRUCTION
+Command: copy BASELINE_FILE.py to a separate output, run Git for Windows `patch -s -o RECONSTRUCTED.py BASELINE_FILE.py < DIFF_FILE.patch` in the evidence directory; exit 0.
+Reconstructed SHA-256 equals MODIFIED_FILE.py: A3F1CD964520E6EA2135AF64468360BBF3FA89525CA89FE1A8D848B18E672FDE.
+DIFF_FILE.patch SHA-256: 26A0BC19C863C7D7DE5E01409CE3B9282556C22B64CA760960A696CEA63D0E5F; 7,510 bytes. This zero-context patch is stored as evidence data; reapply it with Git for Windows `patch` as described above.
+
+AUTOMATED API TESTS
+Command: `..\server\.venv\Scripts\python.exe -m pytest -q` (cwd `C:\Users\Administrator\Desktop\Wellora\server`)
+stdout: `........................ [100%]`; `24 passed, 1 warning in 7.22s`.
+stderr: one Starlette/httpx TestClient deprecation warning; no test failures.
+exit: 0.
+Coverage includes missing/invalid auth, other-account profile and file isolation, no-store/no-OSS-URL response, JPEG/JPG/PNG/PDF signatures with mismatched MIME header, same-profile SHA-256 deduplication, identical bytes remaining separate across profiles, exact 20 MiB acceptance, 20 MiB + 1 rejection, fail-closed unconfigured storage, and construction of the Shanghai OSS adapter using fake fixture values without network access.
+
+MIGRATIONS, STATIC CHECKS, AND CONFIGURATION
+- Alembic `upgrade head`, `current`, `check`, `downgrade -1`, `upgrade head` against a temporary SQLite DB: exit 0; current was `0003 (head)`; `No new upgrade operations detected.`; temporary database removed.
+- `python -m compileall -q app.py object_store.py migrations tests`: exit 0.
+- `uv lock --check --default-index https://pypi.org/simple`: exit 0; `Resolved 54 packages in 1ms`.
+- `docker compose --env-file .env.example config --quiet`: exit 0. This parses Compose configuration only; Docker image build and daemon behavior were not tested.
+- `git diff --check -- <P022 source/config/evidence paths>`: exit 0.
+- An initial `uv lock --check --offline` exited 1 because `alembic` was not in cache. The default-index retry hit a TLS handshake EOF. Changing the command to the public PyPI index succeeded as recorded above.
+- An initial migration invocation used an invalid relative interpreter path; PowerShell printed command-not-found errors and the wrapper did not provide reliable individual exit codes. Correcting it to `.venv\Scripts\python.exe` in the server directory produced the successful migration run above.
+- An initial rollback attempt invoked the Windows system `bash.exe` WSL shim and failed because `/bin/bash` was unavailable. Re-running the same script with Git for Windows Bash succeeded; only the separate verification copy was changed.
+
+SOURCE FILE HASHES
+server/app.py: A3F1CD964520E6EA2135AF64468360BBF3FA89525CA89FE1A8D848B18E672FDE (29,590 bytes)
+server/object_store.py: 6241414C886E947A497D297BD203ECF5A146BD8AFDF5CA4C93E7669EEE9D2D98 (1,942 bytes)
+server/migrations/versions/0003_profile_files.py: 69897BC29C86C60FA7D480AA35B8396F8CC19087657802266D80F7AC2AA5A244 (985 bytes)
+server/tests/test_app.py: D67DC1277212A030DF5E5DB417FE53C7973CE6846A6FA985495C07AD54623F6B (22,923 bytes)
+server/Dockerfile: F4D3DC48607618EC1FD5C47F70DA233985D62B1F011837C899E4EBABC97F4BBC (621 bytes)
+server/docker-compose.yml: 71AD6B9CD6BD8AD321BB70D0CAD84D99B832A2CE54D2429A1953A4C0363BC2F8 (1,515 bytes)
+server/.env.example: F004F93824E5017BB0BCED839B13BCDD9DE7E9FFFA7B5F3CF07EA6B09A470138 (380 bytes)
+server/pyproject.toml: 139187EF18A2F32CE40FCF27412B893D420BA124FFE8937F155241B4F5DCD601 (507 bytes)
+server/uv.lock: 79586139C472D39EDDA7367E5D2E4924842BFEEADF54696A6C653EA31875E4B6 (112,107 bytes)
+
+BOUNDARIES AND FOLLOW-UP
+No real OSS request, credential inspection, remote migration, server deployment, Android integration, malware scan, PDF page-count check, byte-range support, or object deletion/lifecycle job was performed. The user has not confirmed revocation/rotation of the credential previously shared in chat. Do not deploy or connect a real Bucket until the exposed credential is disabled/rotated and Bucket privacy, least-privilege RAM scope, encryption, versioning/deletion, and lifecycle policies are verified. No production or real-health-data readiness is claimed.

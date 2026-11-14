@@ -9,6 +9,8 @@ dependencies = [
     "psycopg[binary]>=3.2,<4",
     "sqlalchemy>=2,<3",
     "uvicorn[standard]>=0.34,<1",
+    "oss2>=2.19,<3",
+    "python-multipart>=0.0.18,<1",
 ]
 
 [dependency-groups]
@@ -16,3 +18,7 @@ dev = ["httpx>=0.28,<1", "pytest>=8.3,<9"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[[tool.uv.index]]
+url = "https://pypi.org/simple"
+default = true

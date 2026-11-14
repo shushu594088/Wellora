@@ -4,19 +4,24 @@ import json
 import os
 import re
 import secrets
+import tempfile
 import uuid
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 from typing import Literal
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
+from fastapi import Depends, FastAPI, File, Header, HTTPException, Query, Request, Response, UploadFile
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pwdlib import PasswordHash
 from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, and_, create_engine, delete, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
+from starlette.background import BackgroundTask
+
+from object_store import ObjectStore, configured_object_store
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
@@ -30,6 +35,9 @@ bearer = HTTPBearer(auto_error=False)
 USERNAME_PATTERN = re.compile(r"^[A-Za-z0-9_]{3,32}$")
 SESSION_TTL = timedelta(days=7)
 ACTIVE_ACCOUNT_LIMIT = 20
+MAX_FILE_BYTES = 20 * 1024 * 1024
+MAX_MULTIPART_OVERHEAD = 1024 * 1024
+object_store: ObjectStore = configured_object_store()
 
 
 class Base(DeclarativeBase):
@@ -88,6 +96,19 @@ class HealthRecord(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     version: Mapped[int] = mapped_column(Integer, default=1)
+
+
+class ProfileFile(Base):
+    __tablename__ = "profile_files"
+    __table_args__ = (UniqueConstraint("profile_id", "sha256", name="uq_profile_files_profile_sha256"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    profile_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    sha256: Mapped[str] = mapped_column(String(64))
+    media_type: Mapped[str] = mapped_column(String(64))
+    byte_size: Mapped[int] = mapped_column(Integer)
+    object_key: Mapped[str] = mapped_column(String(512), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class IdempotencyKey(Base):
@@ -228,6 +249,26 @@ def health_record_result(record: HealthRecord) -> dict:
     }
 
 
+def inspect_upload(filename: str | None, signature: bytes) -> str:
+    suffix = Path(filename or "").suffix.lower()
+    if signature.startswith(b"\xff\xd8\xff") and suffix in {".jpg", ".jpeg"}:
+        return "image/jpeg"
+    if signature.startswith(b"\x89PNG\r\n\x1a\n") and suffix == ".png":
+        return "image/png"
+    if signature.startswith(b"%PDF-") and suffix == ".pdf":
+        return "application/pdf"
+    raise HTTPException(status_code=422, detail="UNSUPPORTED_FILE")
+
+
+def file_result(item: ProfileFile, duplicate: bool = False) -> dict:
+    return {
+        "file_id": item.id,
+        "sha256": item.sha256,
+        "status": "uploaded",
+        "duplicate": duplicate,
+    }
+
+
 def health_record_snapshot(record: HealthRecord) -> str:
     result = health_record_result(record)
     return json.dumps(result, ensure_ascii=False, separators=(",", ":"))
@@ -268,6 +309,15 @@ app = FastAPI(title="Wellora API", version="0.1.0")
 @app.middleware("http")
 async def request_metadata(request: Request, call_next):
     request.state.request_id = str(uuid.uuid4())
+    if request.method == "POST" and re.fullmatch(r"/api/v1/profiles/[0-9a-fA-F-]{36}/files", request.url.path):
+        content_length = request.headers.get("content-length")
+        if content_length and content_length.isdecimal() and int(content_length) > MAX_FILE_BYTES + MAX_MULTIPART_OVERHEAD:
+            response = JSONResponse(status_code=413, content={"error": {
+                "code": "FILE_TOO_LARGE", "message": "FILE_TOO_LARGE", "request_id": request.state.request_id,
+            }})
+            response.headers["X-Request-ID"] = request.state.request_id
+            response.headers["Cache-Control"] = "no-store"
+            return response
     response = await call_next(request)
     response.headers["X-Request-ID"] = request.state.request_id
     response.headers["Cache-Control"] = "no-store"
@@ -424,6 +474,124 @@ def update_profile(
     db.commit()
     db.refresh(profile)
     return profile_result(profile)
+
+
+@app.post("/api/v1/profiles/{profile_id}/files", status_code=201)
+def upload_profile_file(
+    request: Request,
+    profile_id: uuid.UUID,
+    file: UploadFile = File(...),
+    account: Account = Depends(account_from_bearer),
+    db: Session = Depends(get_db),
+):
+    profile = db.scalar(select(Profile).where(
+        Profile.id == str(profile_id), Profile.owner_account_id == account.id,
+    ))
+    if profile is None:
+        raise HTTPException(status_code=404, detail="PROFILE_NOT_FOUND")
+
+    content_length = request.headers.get("content-length")
+    if content_length:
+        try:
+            if int(content_length) > MAX_FILE_BYTES + MAX_MULTIPART_OVERHEAD:
+                raise HTTPException(status_code=413, detail="FILE_TOO_LARGE")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="INVALID_CONTENT_LENGTH")
+
+    temp_path: Path | None = None
+    try:
+        digest = hashlib.sha256()
+        byte_size = 0
+        signature = b""
+        with tempfile.NamedTemporaryFile(prefix="wellora-upload-", delete=False) as temp:
+            temp_path = Path(temp.name)
+            while chunk := file.file.read(64 * 1024):
+                byte_size += len(chunk)
+                if byte_size > MAX_FILE_BYTES:
+                    raise HTTPException(status_code=413, detail="FILE_TOO_LARGE")
+                if len(signature) < 8:
+                    signature += chunk[:8 - len(signature)]
+                digest.update(chunk)
+                temp.write(chunk)
+
+        media_type = inspect_upload(file.filename, signature)
+        sha256 = digest.hexdigest()
+        existing = db.scalar(select(ProfileFile).where(
+            ProfileFile.profile_id == profile.id, ProfileFile.sha256 == sha256,
+        ))
+        if existing is not None:
+            return JSONResponse(status_code=200, content=file_result(existing, duplicate=True))
+
+        file_id = str(uuid.uuid4())
+        object_key = f"profiles/{profile.id}/files/{file_id}"
+        try:
+            object_store.put_file(object_key, temp_path, media_type)
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="FILE_STORAGE_UNAVAILABLE") from exc
+
+        item = ProfileFile(
+            id=file_id,
+            profile_id=profile.id,
+            sha256=sha256,
+            media_type=media_type,
+            byte_size=byte_size,
+            object_key=object_key,
+        )
+        try:
+            db.add(item)
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            try:
+                object_store.delete_object(object_key)
+            except Exception:
+                pass
+            existing = db.scalar(select(ProfileFile).where(
+                ProfileFile.profile_id == profile.id, ProfileFile.sha256 == sha256,
+            ))
+            if existing is not None:
+                return JSONResponse(status_code=200, content=file_result(existing, duplicate=True))
+            raise HTTPException(status_code=409, detail="FILE_CONFLICT")
+        except SQLAlchemyError:
+            db.rollback()
+            try:
+                object_store.delete_object(object_key)
+            except Exception:
+                pass
+            raise
+        return file_result(item)
+    finally:
+        file.file.close()
+        if temp_path is not None:
+            temp_path.unlink(missing_ok=True)
+
+
+@app.get("/api/v1/files/{file_id}/content")
+def download_profile_file(
+    file_id: uuid.UUID,
+    account: Account = Depends(account_from_bearer),
+    db: Session = Depends(get_db),
+):
+    item = db.scalar(select(ProfileFile).join(Profile, Profile.id == ProfileFile.profile_id).where(
+        ProfileFile.id == str(file_id), Profile.owner_account_id == account.id,
+    ))
+    if item is None:
+        raise HTTPException(status_code=404, detail="FILE_NOT_FOUND")
+    try:
+        body = object_store.get_object(item.object_key)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="FILE_STORAGE_UNAVAILABLE") from exc
+    filename = "report" + {"image/jpeg": ".jpg", "image/png": ".png", "application/pdf": ".pdf"}[item.media_type]
+    return StreamingResponse(
+        iter(lambda: body.read(64 * 1024), b""),
+        media_type=item.media_type,
+        headers={
+            "Content-Length": str(item.byte_size),
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "X-Content-Type-Options": "nosniff",
+        },
+        background=BackgroundTask(body.close),
+    )
 
 
 @app.get("/api/v1/profiles/{profile_id}/records")

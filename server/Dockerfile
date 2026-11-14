@@ -9,7 +9,7 @@ WORKDIR /app
 RUN pip install --no-cache-dir uv==0.12.19
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
-COPY app.py alembic.ini ./
+COPY app.py object_store.py alembic.ini ./
 COPY migrations ./migrations
 COPY tests/deployment_smoke.py ./
 RUN useradd --system --uid 10001 --no-create-home wellora

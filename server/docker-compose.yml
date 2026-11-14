@@ -19,6 +19,11 @@ services:
     build: .
     environment:
       DATABASE_URL: postgresql+psycopg://wellora:${DB_PASSWORD}@db:5432/wellora
+      OSS_REGION: ${OSS_REGION:-cn-shanghai}
+      OSS_ENDPOINT: ${OSS_ENDPOINT:-https://oss-cn-shanghai.aliyuncs.com}
+      OSS_BUCKET: ${OSS_BUCKET:-}
+      OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID:-}
+      OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET:-}
     depends_on:
       db:
         condition: service_healthy

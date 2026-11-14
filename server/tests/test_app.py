@@ -1,4 +1,5 @@
 import importlib.util
+import io
 import os
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -10,6 +11,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+
+from object_store import AliyunObjectStore, UnconfiguredObjectStore, configured_object_store
 
 os.environ.setdefault("DATABASE_URL", "sqlite+pysqlite:///:memory:")
 spec = importlib.util.spec_from_file_location("wellora_app", Path(__file__).parents[1] / "app.py")
@@ -55,6 +58,28 @@ def auth(token):
     return {"Authorization": f"Bearer {token}"}
 
 
+class MemoryObjectStore:
+    def __init__(self):
+        self.objects = {}
+
+    def put_file(self, key, path, content_type):
+        self.objects[key] = (path.read_bytes(), content_type)
+
+    def get_object(self, key):
+        return io.BytesIO(self.objects[key][0])
+
+    def delete_object(self, key):
+        self.objects.pop(key, None)
+
+
+@pytest.fixture
+def memory_store():
+    previous = module.object_store
+    module.object_store = MemoryObjectStore()
+    yield module.object_store
+    module.object_store = previous
+
+
 def test_register_hashes_password_and_only_persists_token_hash(client):
     api, factory = client
     created = register(api)
@@ -70,6 +95,129 @@ def test_register_hashes_password_and_only_persists_token_hash(client):
     assert module.password_hash.verify(PASSWORD, stored_account.password_hash)
     assert session.token_hash == module.digest_token(token)
     assert token != session.token_hash
+
+
+def test_profile_file_upload_download_and_profile_scoped_deduplication(client, memory_store):
+    api, _ = client
+    owner, other = account(api, "file_owner"), account(api, "file_other")
+    owner_profile = api.post("/api/v1/profiles", json={"display_name": "Owner"}, headers=auth(owner["access_token"])).json()
+    other_profile = api.post("/api/v1/profiles", json={"display_name": "Other"}, headers=auth(other["access_token"])).json()
+    contents = b"\x89PNG\r\n\x1a\nfictional image"
+    upload_path = f"/api/v1/profiles/{owner_profile['profile_id']}/files"
+    first = api.post(upload_path, headers=auth(owner["access_token"]), files={"file": ("scan.png", contents, "text/plain")})
+    assert first.status_code == 201
+    assert first.json()["status"] == "uploaded"
+    assert first.json()["duplicate"] is False
+    assert set(first.json()) == {"file_id", "sha256", "status", "duplicate"}
+
+    repeated = api.post(upload_path, headers=auth(owner["access_token"]), files={"file": ("another.png", contents, "image/png")})
+    assert repeated.status_code == 200
+    assert repeated.json()["file_id"] == first.json()["file_id"]
+    assert repeated.json()["duplicate"] is True
+
+    other_upload = api.post(
+        f"/api/v1/profiles/{other_profile['profile_id']}/files",
+        headers=auth(other["access_token"]), files={"file": ("scan.png", contents, "image/png")},
+    )
+    assert other_upload.status_code == 201
+    assert other_upload.json()["file_id"] != first.json()["file_id"]
+    assert len(memory_store.objects) == 2
+
+    download = api.get(f"/api/v1/files/{first.json()['file_id']}/content", headers=auth(owner["access_token"]))
+    assert download.status_code == 200
+    assert download.content == contents
+    assert download.headers["content-type"] == "image/png"
+    assert download.headers["content-disposition"] == 'attachment; filename="report.png"'
+    assert download.headers["x-content-type-options"] == "nosniff"
+    assert "oss" not in download.text.lower()
+
+
+def test_profile_file_upload_and_download_enforce_authentication_and_ownership(client, memory_store):
+    api, _ = client
+    owner, other = account(api, "file_owner"), account(api, "file_other")
+    profile = api.post("/api/v1/profiles", json={"display_name": "Owner"}, headers=auth(owner["access_token"])).json()
+    path = f"/api/v1/profiles/{profile['profile_id']}/files"
+    response = api.post(path, files={"file": ("x.png", b"\x89PNG\r\n\x1a\nX", "image/png")})
+    assert response.status_code == 401
+    assert api.post(path, headers=auth(other["access_token"]), files={"file": ("x.png", b"\x89PNG\r\n\x1a\nX", "image/png")}).status_code == 404
+    uploaded = api.post(path, headers=auth(owner["access_token"]), files={"file": ("x.png", b"\x89PNG\r\n\x1a\nX", "image/png")})
+    assert uploaded.status_code == 201
+    assert api.get(f"/api/v1/files/{uploaded.json()['file_id']}/content").status_code == 401
+    denied = api.get(f"/api/v1/files/{uploaded.json()['file_id']}/content", headers=auth(other["access_token"]))
+    assert denied.status_code == 404
+    assert api.get(f"/api/v1/files/{uuid.uuid4()}/content", headers=auth(owner["access_token"])).status_code == 404
+
+
+def test_profile_file_accepts_jpeg_png_and_pdf_signatures(client, memory_store):
+    api, _ = client
+    owner = account(api, "file_formats")
+    profile = api.post("/api/v1/profiles", json={"display_name": "Owner"}, headers=auth(owner["access_token"])).json()
+    path = f"/api/v1/profiles/{profile['profile_id']}/files"
+    samples = [
+        ("scan.jpg", b"\xff\xd8\xff\xe0jpeg", "image/jpeg"),
+        ("scan.jpeg", b"\xff\xd8\xff\xe0jpeg2", "image/jpeg"),
+        ("scan.pdf", b"%PDF-1.7\nfictional", "application/pdf"),
+    ]
+    for filename, contents, expected_type in samples:
+        response = api.post(path, headers=auth(owner["access_token"]), files={"file": (filename, contents, "application/octet-stream")})
+        assert response.status_code == 201
+        item = api.get(f"/api/v1/files/{response.json()['file_id']}/content", headers=auth(owner["access_token"]))
+        assert item.headers["content-type"] == expected_type
+        assert item.content == contents
+
+
+def test_profile_file_rejects_bad_signature_and_oversize(client, memory_store):
+    api, _ = client
+    owner = account(api, "file_owner")
+    profile = api.post("/api/v1/profiles", json={"display_name": "Owner"}, headers=auth(owner["access_token"])).json()
+    path = f"/api/v1/profiles/{profile['profile_id']}/files"
+    invalid = api.post(path, headers=auth(owner["access_token"]), files={"file": ("fake.png", b"not an image", "image/png")})
+    assert invalid.status_code == 422
+    assert invalid.json()["error"]["code"] == "UNSUPPORTED_FILE"
+    mismatched = api.post(path, headers=auth(owner["access_token"]), files={"file": ("fake.jpg", b"\x89PNG\r\n\x1a\n", "image/jpeg")})
+    assert mismatched.status_code == 422
+    maximum = api.post(
+        path,
+        headers=auth(owner["access_token"]),
+        files={"file": ("maximum.pdf", b"%PDF-" + b"x" * (module.MAX_FILE_BYTES - 5), "application/pdf")},
+    )
+    assert maximum.status_code == 201
+    oversized = api.post(
+        path,
+        headers=auth(owner["access_token"]),
+        files={"file": ("large.pdf", b"%PDF-" + b"x" * (module.MAX_FILE_BYTES + 1 - 5), "application/pdf")},
+    )
+    assert oversized.status_code == 413
+    assert oversized.json()["error"]["code"] == "FILE_TOO_LARGE"
+
+
+def test_profile_file_returns_unavailable_without_storage(client):
+    api, _ = client
+    previous = module.object_store
+    module.object_store = UnconfiguredObjectStore()
+    try:
+        owner = account(api, "file_owner")
+        profile = api.post("/api/v1/profiles", json={"display_name": "Owner"}, headers=auth(owner["access_token"])).json()
+        response = api.post(
+            f"/api/v1/profiles/{profile['profile_id']}/files",
+            headers=auth(owner["access_token"]),
+            files={"file": ("x.png", b"\x89PNG\r\n\x1a\nX", "image/png")},
+        )
+        assert response.status_code == 503
+        assert response.json()["error"]["code"] == "FILE_STORAGE_UNAVAILABLE"
+    finally:
+        module.object_store = previous
+
+
+def test_private_oss_configuration_uses_server_environment(monkeypatch):
+    monkeypatch.setenv("OSS_ACCESS_KEY_ID", "fixture-id")
+    monkeypatch.setenv("OSS_ACCESS_KEY_SECRET", "fixture-secret-not-real")
+    monkeypatch.setenv("OSS_BUCKET", "fixture-private-bucket")
+    monkeypatch.setenv("OSS_REGION", "cn-shanghai")
+    monkeypatch.setenv("OSS_ENDPOINT", "https://oss-cn-shanghai.aliyuncs.com")
+    store = configured_object_store()
+    assert isinstance(store, AliyunObjectStore)
+    assert store.bucket.bucket_name == "fixture-private-bucket"
 
 
 def test_invalid_registration_does_not_echo_password(client):
