@@ -1,0 +1,47 @@
+P023 follow-up verification — 2026-11-14 (Asia/Shanghai)
+
+Scope and boundary
+- Stable target: existing SSH alias `server1`, Wellora Compose project `wellora-hk`; public API is `https://api.shushu520.top`.
+- This follow-up addresses the requested PowerShell credential setup command, rechecks the four existing Compose roles, validates the Certbot reload hook, and performs one fictional OSS-unconfigured API smoke test.
+- No credential value was read, sent, used, printed, stored, or committed. The previously disclosed OSS key remains unrotated by the user's choice and is not used. No real OSS request is made. Do not enter real health data.
+
+Four-role transaction (reopened and hashed)
+- BASELINE_FILE.yml: `C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P023-hk-server\BASELINE_FILE.yml`; SHA-256 `fa6ccea1ca4e3a031d9e99f25cc05db803aa9bac642c000ddab14f6d9da54b52`.
+- MODIFIED_FILE.yml: `C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P023-hk-server\MODIFIED_FILE.yml`; SHA-256 `85db7ca6c1848ea3ccffa5cc2e7151a24e2e6c85b11fc2f9a0ccb951bb84f749`.
+- DIFF_FILE.patch: `C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P023-hk-server\DIFF_FILE.patch`; SHA-256 `d17f8e9a191564cf84c6bd1a688ac7d8cd3c3e424362b194c30507f64178ac20`.
+- ROLLBACK.sh: `C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P023-hk-server\ROLLBACK.sh`; SHA-256 `d005d28c83a054f6b3d9e74ac93f37db85800f1b60d3d4258d602e65b5202e68`.
+- Command: `python evidence/transactions/P023-hk-server/probe.py <repo>\server <role.yml>` using Compose with `server/.env.example`.
+- BASELINE stdout: `{"api_ports": [], "command": null, "db_ports": []}`; exit 0.
+- MODIFIED stdout: `{"api_ports": [{"host_ip": "127.0.0.1", "mode": "ingress", "protocol": "tcp", "published": "8010", "target": 8000}], "command": ["/bin/sh", "-c", "alembic upgrade head && exec uvicorn app:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips=172.29.240.1"], "db_ports": []}`; exit 0.
+- ROLLBACK stdout equals BASELINE exactly; exit 0. Separate rollback copy SHA-256 equals baseline: `fa6ccea1ca4e3a031d9e99f25cc05db803aa9bac642c000ddab14f6d9da54b52`.
+- Patch reconstruction with Git for Windows `patch.exe -o REBUILT.yml -i DIFF_FILE.patch` exited 0; rebuilt SHA-256 equals MODIFIED: `85db7ca6c1848ea3ccffa5cc2e7151a24e2e6c85b11fc2f9a0ccb951bb84f749`.
+- Changed deployment field: `services.api.ports` is loopback-only `127.0.0.1:8010:8000`; `services.db.ports` remains absent.
+
+PowerShell installer and private helper checks
+- Parser command used PowerShell 7.6.9: `[System.Management.Automation.Language.Parser]::ParseInput(...)`; stdout `PowerShell parse OK`; zero parse errors; exit 0.
+- `python -m py_compile server/deploy/configure-hk-oss.py`: exit 0.
+- Fake-target helper test rejected a wrong Bucket before changing the temp `.env`; accepted only the confirmed region/Bucket with fake values, emitted only the generic success message, and had both Docker Compose calls mocked. Output: `Installed server-private OSS configuration and restarted only the Wellora API; values were not echoed.` and `helper fake-target tests: invalid bucket rejected without changing env; fake values accepted, deployment calls mocked`; exit 0. This is a local simulation, not a real key install.
+- Environment-specific validation errors corrected: an initial import by underscore name failed because the filename contains hyphens; loading by file path fixed it. The first fake-target run hit Windows' lack of `os.fchmod` (the helper intentionally targets Linux); the successful repeat mocked POSIX permission/ownership calls and deployment. An empty-stdin helper invocation exited 1 before any target was changed. No real credential was supplied.
+
+Renewal hook and server state
+- Added local source `server/deploy/20-reload-nginx` with `#!/bin/sh`, `set -eu`, `systemctl reload nginx`; SHA-256 `8760d93ed08e1240bc7bbdba203bfe4d0d0ee5b05eec423b4f9fedc4cc8a1312`.
+- Installed same hook at `/etc/letsencrypt/renewal-hooks/deploy/20-reload-nginx` on `server1`, mode `755`, root:root; local and remote SHA-256 both `8760d93ed08e1240bc7bbdba203bfe4d0d0ee5b05eec423b4f9fedc4cc8a1312`. Certbot 1.21.0 and `certbot.timer` active. The deployed hook passed `sh -n`; manual hook invocation and `nginx -t` succeeded. A dry-run renewal was not run; this Certbot version's help did not expose a run-deploy-hooks option.
+- First hook transfer used CRLF and failed with `sh: 4: <CR>: not found`; normalized remote file to LF, then `sh -n`, `nginx -t`, manual reload, and `systemctl is-active nginx` all succeeded. Hook is separate from the apex vhost.
+- Remote OSS helper SHA matches local: `532954b5378dfd7afe2a59a16be5f69bd9ee2670de743cc32b769fd31394fbd9`.
+- Server `.env` metadata: `600 root:root`; both OSS key variables were checked with values redacted and are blank. API container loaded `UnconfiguredObjectStore` (exit 0), so fail-closed behavior remains active.
+- External probes: `API TLS health status=200 verify=0`; `apex HTTPS status=200 verify=0`. Health body: `{"status":"ok"}`. Nginx and Certbot timer both reported `active`.
+
+Fictional API smoke and cleanup
+- Command: `server/.venv/Scripts/python.exe evidence/transactions/P023-hk-server/oss-unconfigured-smoke.py`; this creates a random fictional account/profile, attempts a signature-valid PNG, then logs out.
+- Literal stdout: `register=201 login=200 profile=201 upload=503:FILE_STORAGE_UNAVAILABLE logout=204`; the script printed a random `p023hk_` fixture username. Exit 0.
+- Deleted exactly that generated account; its profile/session rows cascaded. Also deleted only that fixture username's SHA-256 throttle key; shared IP throttle keys were left untouched.
+- Post-cleanup counts: `accounts=0`, `profiles=0`, `sessions=0`, `health_records=0`, `profile_files=0`, `idempotency_keys=0`, `login_throttles=2`. The two shared/unattributed throttle rows were retained.
+- `server/.venv/Scripts/python.exe -m pytest -q` from the repository root initially failed collection (`ModuleNotFoundError: object_store`); rerun from `server/` passed: `24 passed, 1 warning in 6.35s` (Starlette/httpx deprecation warning).
+- A psql count query initially failed due to PowerShell quote interpolation; rerunning as a fixed-table shell loop succeeded and produced the counts above. It did not alter database state.
+
+Credential command and exact behavior
+- From repository root, only after revoking the previously disclosed key and creating a fresh least-privilege RAM key for the confirmed Bucket, run: `powershell -ExecutionPolicy Bypass -File .\server\deploy\configure-hk-oss.ps1`.
+- The PowerShell prompt requires typing `ROTATED`, then securely prompts for the new OSS AccessKey ID and Secret; transmits JSON over SSH stdin to the root-owned helper; atomically writes server `.env` mode 0600; restarts only Wellora API; verifies adapter initialization. It does not print values. If the old key remains unrotated, do not proceed; the prompt cancels unless the user asserts rotation.
+- This is not a command to fetch existing secrets. API access uses each user's registration username/password, not a shared API key; register/login in the app. DeepSeek/XFYUN keys are not currently wired into this Compose/API configuration. No static API, OSS, DeepSeek, or XFYUN secret is available to print from this command.
+
+Remaining acceptance: new safe OSS credential and Bucket privacy/encryption/lifecycle review; real OSS upload/download with fictional content; phone App business flow; cross-border health-data compliance. Raw conversation export remains user-supplied and is not replaced by this summary.

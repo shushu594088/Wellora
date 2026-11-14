@@ -66,3 +66,7 @@ API 测试自行使用隔离 SQLite；手动启动服务须显式配置 `DATABAS
 默认分支为 `main`，已跟踪 `origin/main`。远端为 [shushu594088/Wellora](https://github.com/shushu594088/Wellora)，可见性为 Public。
 
 本仓库的提交者身份已配置为 `shushu <nmy061023@gmail.com>`。首次提交 `10c6746d1f56874e7a537e897e19b22d1faac3a0` 仅保存项目规则、现有忽略规则和初始化文档，已推送并核对远端 SHA。用户确认空项目模板后，将现有应用源码和 Gradle 工程文件按初始骨架纳入版本管理；不修改模板实现。IDE 本地配置、SDK 路径和构建产物不纳入本轮提交。
+
+## P023 香港主服务器部署
+
+用户指定 `server1`（Ubuntu 22.04，`38.76.195.17`）作为 Wellora 主机。该机已有 `shushu520.top` 主站和其他服务；Wellora 使用独立 Compose override `server/docker-compose.hk.yml`、本机 `127.0.0.1:8010` API 端口及 `server/deploy/nginx-api.conf` 子域虚拟主机，保留现有主站。已为 API 子域签发 HTTPS 证书并部署专属 vhost；OSS 密钥不得在聊天或 Git 保存，未设置凭据时文件 API 应返回 503。数据库密码由服务器随机生成。只有在阿里云撤销聊天中已披露的旧 key、创建新的最小权限 RAM OSS key 后，才可在项目根目录执行 `powershell -ExecutionPolicy Bypass -File .\server\deploy\configure-hk-oss.ps1`：脚本 SecureString 交互采集新 AccessKey，通过 `ssh server1` stdin 传入服务器、写为 0600 私有 `.env` 并重启 Wellora API，不在命令行或日志回显 secret。当前只实现了 OSS 凭据接入；DeepSeek／讯飞 key 尚未接入 API/Compose。部署状态及实际命令见 `docs/开发记录.md` P023 和 `evidence/transactions/P023-hk-server/VERIFICATION.txt`。
