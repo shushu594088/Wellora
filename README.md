@@ -70,3 +70,7 @@ API 测试自行使用隔离 SQLite；手动启动服务须显式配置 `DATABAS
 ## P023 香港主服务器部署
 
 用户指定 `server1`（Ubuntu 22.04，`38.76.195.17`）作为 Wellora 主机。该机已有 `shushu520.top` 主站和其他服务；Wellora 使用独立 Compose override `server/docker-compose.hk.yml`、本机 `127.0.0.1:8010` API 端口及 `server/deploy/nginx-api.conf` 子域虚拟主机，保留现有主站。已为 API 子域签发 HTTPS 证书并部署专属 vhost；OSS 密钥不得在聊天或 Git 保存，未设置凭据时文件 API 应返回 503。数据库密码由服务器随机生成。只有在阿里云撤销聊天中已披露的旧 key、创建新的最小权限 RAM OSS key 后，才可在项目根目录执行 `powershell -ExecutionPolicy Bypass -File .\server\deploy\configure-hk-oss.ps1`：脚本 SecureString 交互采集新 AccessKey，通过 `ssh server1` stdin 传入服务器、写为 0600 私有 `.env` 并重启 Wellora API，不在命令行或日志回显 secret。当前只实现了 OSS 凭据接入；DeepSeek／讯飞 key 尚未接入 API/Compose。部署状态及实际命令见 `docs/开发记录.md` P023 和 `evidence/transactions/P023-hk-server/VERIFICATION.txt`。
+
+## P023 香港主服务器部署
+
+用户指定 `server1`（Ubuntu 22.04，`38.76.195.17`）作为 Wellora 主机。该机已有 `shushu520.top` 主站和其他服务；Wellora 使用独立 Compose override `server/docker-compose.hk.yml`、本机 `127.0.0.1:8010` API 端口及 `server/deploy/nginx-api.conf` 子域虚拟主机，保留现有主站。API 子域已启用 HTTPS，OSS 凭据由本地 PowerShell 安全提示写入服务器私有 `.env`；已用虚构 PNG 验证鉴权 API 上传／下载成功并清理对象。Bucket ACL 为 private 且公共访问阻断，但当前未配置服务端加密或生命周期规则，禁止存入真实健康文件直至补齐并核验。数据库密码由服务器随机生成。今后运行 `powershell -ExecutionPolicy Bypass -File .\server\deploy\configure-hk-oss.ps1` 时，只使用旧披露凭据已撤销后新建的最小权限 RAM key；输入大写 `ROTATED` 后在本地安全提示录入，不要发到聊天。若最新运行所用 ID 是先前贴入聊天的 key，应先禁用并重新生成。该脚本只处理 OSS；DeepSeek／讯飞 key 尚未接入 API/Compose。验证记录见 `evidence/transactions/P023-hk-server/VERIFICATION.txt`。
