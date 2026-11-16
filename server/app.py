@@ -316,7 +316,7 @@ def xfyun_ocr_unit_price() -> Decimal | None:
         price = Decimal(raw)
     except InvalidOperation:
         return None
-    if not price.is_finite() or price <= 0 or price > OCR_MONTHLY_BUDGET_RMB or price.as_tuple().exponent < -4:
+    if not price.is_finite() or price < 0 or price > OCR_MONTHLY_BUDGET_RMB or price.as_tuple().exponent < -4:
         return None
     return price
 

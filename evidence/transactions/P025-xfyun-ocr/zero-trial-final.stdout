@@ -1,0 +1,9 @@
+compose_config=ok
+api_status=status=Up image=wellora-hk-api
+db_status=status=Up (healthy) image=postgres:16-alpine
+migration=0004 (head)
+env_mode=600 root:root
+config_presence={'product':'se75ocrbm','unit_price':'0.00','credentials_present':True}
+local_health={"status":"ok"}
+public_health={"status":"ok"}
+counts={'accounts':0,'profiles':0,'files':0,'ocr_calls':0,'health_records':0}

@@ -319,6 +319,36 @@ def test_ocr_refuses_pdf_missing_price_and_unknown_product(client, memory_store,
     assert product_not_enabled.json()["error"]["code"] == "OCR_PROVIDER_UNAVAILABLE"
 
 
+def test_ocr_accepts_zero_trial_price_and_reserves_zero(client, memory_store, monkeypatch):
+    api, factory = client
+    owner = account(api, "ocr_zero_trial")
+    file_id = upload_ocr_fixture(api, owner["access_token"])
+    configure_ocr(monkeypatch)
+    monkeypatch.setenv("XFYUN_OCR_UNIT_PRICE_RMB", "0.00")
+
+    class FakeOcrClient:
+        def recognize(self, image, media_type, *, request_id=None):
+            assert image == b"\x89PNG\r\n\x1a\nfixture"
+            assert media_type == "image/png"
+            assert request_id
+            return "Synthetic trial OCR draft", "provider-zero-price-sid"
+
+    monkeypatch.setattr(module, "create_xfyun_ocr_client", FakeOcrClient)
+    response = api.post(
+        f"/api/v1/files/{file_id}/ocr",
+        headers={**auth(owner["access_token"]), "Idempotency-Key": "ocr-zero-trial"},
+        json={"confirm_provider_transfer": True},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["requires_manual_review"] is True
+    with factory() as db:
+        call = db.scalar(select(module.OcrCall))
+        assert call.status == "succeeded"
+        assert call.reserved_rmb == module.Decimal("0.0000")
+        assert db.scalar(select(module.HealthRecord)) is None
+
+
 def test_ocr_rejects_base64_expansion_over_provider_limit_before_reservation(client, memory_store, monkeypatch):
     api, factory = client
     owner = account(api, "ocr_size")

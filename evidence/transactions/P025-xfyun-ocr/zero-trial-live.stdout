@@ -1,0 +1,8 @@
+config={'product':'se75ocrbm','unit_price':'0.00','credentials_present':True}
+migration=0004 (head)
+health={"status":"ok"}
+{"register":201,"login":200,"profile":201,"upload":201,"transfer_not_confirmed":422,"ocr_route":200,"draft_review_required":True,"fixture_text_checks":{"synthetic_name":True,"synthetic_document_number":True,"synthetic_value":True},"health_records_for_fixture_profile":0}
+route_exit=0
+{"test_account_deleted":True,"test_objects_deleted":1,"test_ocr_calls_deleted":1,"unresolved_ocr_calls_preserved":0,"test_username_throttle_deleted":1,"test_account_remaining":False,"test_files_remaining":0,"test_ocr_calls_remaining":0,"shared_ip_throttle_untouched":True}
+ocr_call_status_counts {}
+health_record_count 0

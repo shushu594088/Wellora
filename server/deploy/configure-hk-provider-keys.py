@@ -44,12 +44,12 @@ def main() -> None:
 
     if "XFYUN_OCR_UNIT_PRICE_RMB" in values and values["XFYUN_OCR_UNIT_PRICE_RMB"].strip():
         if not re.fullmatch(r"[0-9]+(?:\.[0-9]{1,4})?", values["XFYUN_OCR_UNIT_PRICE_RMB"].strip()):
-            raise SystemExit("OCR price must be a positive RMB amount with at most four decimals.")
+            raise SystemExit("OCR price must be a non-negative RMB amount with at most four decimals.")
         try:
             price = Decimal(values["XFYUN_OCR_UNIT_PRICE_RMB"].strip())
         except InvalidOperation as exc:
-            raise SystemExit("OCR price must be a positive RMB amount.") from exc
-        if price <= 0 or price > Decimal("80.00"):
+            raise SystemExit("OCR price must be a non-negative RMB amount.") from exc
+        if price < 0 or price > Decimal("80.00"):
             raise SystemExit("OCR price must be between 0 and 80 RMB per image.")
 
     deepseek_selected = "DEEPSEEK_API_KEY" in values
@@ -61,8 +61,12 @@ def main() -> None:
     if xfyun_selected and not all(values.get(key, "").strip() for key in xfyun_fields):
         raise SystemExit("XFYUN App ID, API key, and API secret are required together.")
 
-    price_only = set(values) == {"XFYUN_OCR_UNIT_PRICE_RMB"}
-    if not deepseek_selected and not xfyun_selected and not price_only:
+    ocr_config_only = set(values) <= {
+        "XFYUN_OCR_PRODUCT",
+        "XFYUN_ASR_PRODUCT",
+        "XFYUN_OCR_UNIT_PRICE_RMB",
+    }
+    if not deepseek_selected and not xfyun_selected and not ocr_config_only:
         raise SystemExit("Select DeepSeek and/or XFYUN credentials.")
 
     lines = ENV_FILE.read_text(encoding="utf-8").splitlines()

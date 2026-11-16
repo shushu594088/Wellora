@@ -127,7 +127,22 @@ def test_writes_verified_ocr_price_without_provider_secret(configured, monkeypat
     assert len(calls) == 2
 
 
-@pytest.mark.parametrize("price", ["0", "-1", "80.01", "NaN", "1.00001"])
+def test_writes_zero_trial_ocr_price_without_provider_secret(configured, monkeypatch, capsys):
+    env_file, calls = configured
+    monkeypatch.setattr(
+        configure.sys,
+        "stdin",
+        io.StringIO('{"XFYUN_OCR_UNIT_PRICE_RMB":"0.00"}'),
+    )
+
+    configure.main()
+
+    assert "XFYUN_OCR_UNIT_PRICE_RMB='0.00'" in env_file.read_text(encoding="utf-8")
+    assert "0.00" not in capsys.readouterr().out
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize("price", ["-1", "80.01", "NaN", "1.00001"])
 def test_rejects_invalid_ocr_price_before_writing(configured, monkeypatch, price):
     env_file, calls = configured
     baseline = env_file.read_bytes()
