@@ -24,6 +24,13 @@ services:
       OSS_BUCKET: ${OSS_BUCKET:-}
       OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID:-}
       OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-}
+      XFYUN_APP_ID: ${XFYUN_APP_ID:-}
+      XFYUN_API_KEY: ${XFYUN_API_KEY:-}
+      XFYUN_API_SECRET: ${XFYUN_API_SECRET:-}
+      XFYUN_OCR_PRODUCT: ${XFYUN_OCR_PRODUCT:-}
+      XFYUN_ASR_PRODUCT: ${XFYUN_ASR_PRODUCT:-}
     depends_on:
       db:
         condition: service_healthy

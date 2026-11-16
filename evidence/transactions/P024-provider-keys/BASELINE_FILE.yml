@@ -1,0 +1,61 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: wellora
+      POSTGRES_USER: wellora
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD to a random hex password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wellora -d wellora"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks: [data]
+    restart: unless-stopped
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://wellora:${DB_PASSWORD}@db:5432/wellora
+      OSS_REGION: ${OSS_REGION:-cn-shanghai}
+      OSS_ENDPOINT: ${OSS_ENDPOINT:-https://oss-cn-shanghai.aliyuncs.com}
+      OSS_BUCKET: ${OSS_BUCKET:-}
+      OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID:-}
+      OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [edge, data]
+    restart: unless-stopped
+
+  proxy:
+    image: caddy:2-alpine
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST:?Set PUBLIC_HOST to a registered domain resolving to this server}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [api]
+    networks:
+      edge:
+        ipv4_address: 172.29.240.2
+    restart: unless-stopped
+
+networks:
+  edge:
+    ipam:
+      config:
+        - subnet: 172.29.240.0/24
+  data:
+    internal: true
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

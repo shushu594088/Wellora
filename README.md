@@ -19,6 +19,7 @@
 - [P020：测试后端自动验收](evidence/prompts/P020.md)
 - [P021：本人健康记录 API](evidence/prompts/P021.md)
 - [P022：私有 OSS 文件 API](evidence/prompts/P022.md)
+- [P024：DeepSeek／讯飞凭据配置接线](evidence/prompts/P024.md)
 - [P001：初始化 Git](evidence/prompts/P001.md)
 - [P002：归档 Stitch 原型](evidence/prompts/P002.md)
 - [P003：需求、架构与界面文档](evidence/prompts/P003.md)

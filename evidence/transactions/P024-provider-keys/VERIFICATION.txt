@@ -1,0 +1,46 @@
+P024 provider credential configuration — 2026-11-16 (Asia/Shanghai)
+
+Scope and safety
+- Target: server/docker-compose.yml, services.api.environment. Goal: securely configure DeepSeek and XFYUN service credentials on the selected Hong Kong host only.
+- This change is credential plumbing, not an implementation of provider adapters, API routes, OCR/ASR/model calls, usage tracking, or vendor validation. No supplier request was made. No real provider credential was entered or printed.
+- No shared Wellora API key was created. App authentication remains per-user accounts. Provider settings are private server environment variables only.
+- All tests used fabricated fixture values. Existing server .env contents were not read or changed; metadata only showed mode 0600, root:root.
+
+Four-role transaction (reopened and tested)
+- BASELINE_FILE.yml: C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P024-provider-keys\BASELINE_FILE.yml; 1515 bytes; SHA-256 71ad6b9cd6bd8ad321bb70d0cad84d99b832a2ce54d2429a1953a4c0363bc2f8.
+- MODIFIED_FILE.yml: C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P024-provider-keys\MODIFIED_FILE.yml; 1823 bytes; SHA-256 8c66b7defbb0b55564030f41a9499d2af6f2c3c1153c8080142768afb245ddb4.
+- DIFF_FILE.patch: C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P024-provider-keys\DIFF_FILE.patch; 583 bytes; SHA-256 d1426272e4a4284f3672cfb4b69a8b63ef927dd5e454b5c5ee50f51cad25bd23.
+- ROLLBACK.sh: C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P024-provider-keys\ROLLBACK.sh; 387 bytes; SHA-256 d005d28c83a054f6b3d9e74ac93f37db85800f1b60d3d4258d602e65b5202e68.
+- BASELINE and MODIFIED outputs from probe.py (exit 0, stderr empty): BASELINE {"api_ports": [], "db_ports": [], "provider_env_fields": []}; MODIFIED {"api_ports": [], "db_ports": [], "provider_env_fields": ["DEEPSEEK_API_KEY", "DEEPSEEK_MODEL", "XFYUN_API_KEY", "XFYUN_API_SECRET", "XFYUN_APP_ID", "XFYUN_ASR_PRODUCT", "XFYUN_OCR_PRODUCT"]}.
+- ROLLBACK output was identical to BASELINE (exit 0, stderr empty). Rollback-copy SHA-256 equaled BASELINE: 71ad6b9cd6bd8ad321bb70d0cad84d99b832a2ce54d2429a1953a4c0363bc2f8. Patch reconstruction SHA-256 equaled MODIFIED: 8c66b7defbb0b55564030f41a9499d2af6f2c3c1153c8080142768afb245ddb4.
+- No port or database changes in the Compose modification; only seven optional API environment names were added.
+
+Implementation
+- `server/deploy/configure-hk-provider-keys.ps1`: local confirmation NEW_KEYS, provider selection DEEPSEEK/XFYUN/BOTH; API keys and secrets use masked SecureString prompts; model/product identifiers may remain blank; JSON is sent to `ssh -T server1` on stdin.
+- `server/deploy/configure-hk-provider-keys.py`: allowlisted fields only; validates complete XFYUN credential group and required non-empty keys; rejects newline values; atomically writes selected settings into server `.env` while retaining unrelated entries; owner root:root and mode 0600; restarts only Wellora API and verifies selected environment presence without displaying values. It explicitly states that adapters are absent and no provider call is made.
+- `.env.example` contains comments only, no sample credential values.
+
+Local validation (literal outcomes)
+- PowerShell 7.6.9 Parser: `PowerShell parse: OK`; zero syntax errors.
+- Focused test command: `server/.venv/Scripts/python.exe -m pytest -q server/tests/test_deploy_provider_keys.py`; stdout `5 passed in 0.02s`; stderr empty; exit 0.
+- Full API suite command from `server/`: `.venv/Scripts/python.exe -m pytest -q`; stdout `29 passed, 1 warning in 6.20s`; the one warning is the existing Starlette/httpx TestClient deprecation; exit 0.
+- Tests cover partial XFYUN rejection without writing, allowed blank optional model, no fake-secret echo, newline/unknown-field rejection, and literal `$`, backslash and quote serialization.
+
+Remote staging and verification (server1)
+- Compose backup: `/opt/wellora-hk/backups/P024-provider-keys-20261116/docker-compose.yml`, SHA-256 71ad6b9cd6bd8ad321bb70d0cad84d99b832a2ce54d2429a1953a4c0363bc2f8.
+- Helper backups: `/opt/wellora-hk/backups/P024-provider-keys-20261116/configure-hk-provider-keys-before-fix.py` SHA-256 e45393941e1d895f4e55b129d29357faebbec582981b7dee6d27d1c9e760869c; `/opt/wellora-hk/backups/P024-provider-keys-20261116/configure-hk-provider-keys-before-literal-escape-fix.py` SHA-256 3fd2fa79f599c93e9bc32ae2552bc82b3b3238104d6d6cb1d9739be5f8089e17.
+- Installed latest local helper to `/opt/wellora-hk/server/deploy/configure-hk-provider-keys.py`; local and remote SHA-256 match: 9f97855d1e7b6d9f39eafe626862da228193d49d961d2aaa8c721590a6590de4. Remote py_compile and `docker compose ... config --quiet` both exit 0. Remote server .env metadata remains `600 root:root`; its values were not read.
+- Disposable Compose container round-trip with fixture string containing a dollar sign, backslash, quote and spaces compared only its SHA-256: stdout `Compose container round-trip with quote, dollar, backslash, spaces: PASS`; exit 0. Fixture was not a real key and no vendor endpoint was contacted.
+- Existing API container was not restarted by staging; API and DB remained running, API is bound only to 127.0.0.1:8010, PostgreSQL has no host-published port. HTTPS health stdout `{"status":"ok"}`; exit 0. Provider-field check printed only booleans, all false at verification time; exit 0.
+- No API credentials were entered. No provider service was called or exposed through a new port.
+
+Errors and corrections
+- First remote helper import ran without sufficient file-read privileges and raised `PermissionError`; reran the isolated fixture test through privileged Python stdin successfully.
+- An early `docker compose config` assertion compared rendered YAML text literally; Compose renders literal-dollar escaping in config output. Replaced it with an isolated one-off container environment test and SHA-only comparison, which passed.
+- Initial Git Bash invocation lacked `dirname` on PATH; adding Git `usr/bin` and `bin` allowed the rollback and patch checks to pass.
+- One attempt to construct the remote field-check command failed in PowerShell parsing before SSH ran; corrected quoting and reran, yielding all seven `False` flags and health 200.
+
+Next work and limitations
+- If the user has fresh, unexposed provider credentials, run `powershell -ExecutionPolicy Bypass -File .\server\deploy\configure-hk-provider-keys.ps1` at the repository root and enter values only in the local prompts.
+- Before actual integration, confirm account-supported DeepSeek model and XFYUN OCR/ASR product IDs, prices, quotas, request formats, retention, and budget controls. Implement and test provider adapters separately with fictional data. Credential storage alone does not activate any vendor service.
+- Original full conversation export is still pending user action; this summary is not a raw transcript.
