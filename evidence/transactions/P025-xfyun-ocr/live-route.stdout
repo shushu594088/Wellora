@@ -1,0 +1,1 @@
+{"register":201,"login":200,"profile":201,"upload":201,"transfer_not_confirmed":422,"ocr_route":200,"draft_review_required":true,"fixture_text_checks":{"synthetic_name":true,"synthetic_document_number":true,"synthetic_value":true},"health_record_written":false}

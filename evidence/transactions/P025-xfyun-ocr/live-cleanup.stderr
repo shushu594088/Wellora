@@ -1,0 +1,2 @@
+/opt/venv/lib/python3.12/site-packages/oss2/api.py:703: SyntaxWarning: invalid escape sequence '\&'
+  r'http://your-bucket.oss-cn-hangzhou.aliyuncs.com/logo.jpg?OSSAccessKeyId=YourAccessKeyId\&Expires=1447178011&Signature=UJfeJgvcypWq6Q%2Bm3IJcSHbvSak%3D'
