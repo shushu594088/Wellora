@@ -1,5 +1,6 @@
 import importlib.util
 import io
+import json
 import pathlib
 import subprocess
 import sys
@@ -72,7 +73,7 @@ def test_writes_selected_deepseek_fields_without_echoing(configured, monkeypatch
     assert "DEEPSEEK_MODEL=''" in stored
     assert fake_key not in output
     assert "Saved selected provider settings" in output
-    assert "no vendor API request was made" in output
+    assert "makes no vendor API request" in output
     assert len(calls) == 2
     assert calls[0][-1] == "api"
     assert "fixture-only" not in repr(calls)
@@ -105,6 +106,38 @@ def test_rejects_unknown_environment_fields(configured, monkeypatch):
     )
 
     with pytest.raises(SystemExit, match="Invalid provider settings"):
+        configure.main()
+
+    assert env_file.read_bytes() == baseline
+    assert calls == []
+
+
+def test_writes_verified_ocr_price_without_provider_secret(configured, monkeypatch, capsys):
+    env_file, calls = configured
+    monkeypatch.setattr(
+        configure.sys,
+        "stdin",
+        io.StringIO('{"XFYUN_OCR_UNIT_PRICE_RMB":"1.25"}'),
+    )
+
+    configure.main()
+
+    assert "XFYUN_OCR_UNIT_PRICE_RMB='1.25'" in env_file.read_text(encoding="utf-8")
+    assert "1.25" not in capsys.readouterr().out
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize("price", ["0", "-1", "80.01", "NaN", "1.00001"])
+def test_rejects_invalid_ocr_price_before_writing(configured, monkeypatch, price):
+    env_file, calls = configured
+    baseline = env_file.read_bytes()
+    monkeypatch.setattr(
+        configure.sys,
+        "stdin",
+        io.StringIO(json.dumps({"XFYUN_OCR_UNIT_PRICE_RMB": price})),
+    )
+
+    with pytest.raises(SystemExit):
         configure.main()
 
     assert env_file.read_bytes() == baseline

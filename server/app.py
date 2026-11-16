@@ -7,8 +7,10 @@ import secrets
 import tempfile
 import uuid
 from datetime import date, datetime, timedelta, timezone
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Literal
+from zoneinfo import ZoneInfo
 
 from fastapi import Depends, FastAPI, File, Header, HTTPException, Query, Request, Response, UploadFile
 from fastapi.exceptions import RequestValidationError
@@ -16,12 +18,13 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pwdlib import PasswordHash
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, and_, create_engine, delete, func, or_, select, text, update
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint, and_, create_engine, delete, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 from starlette.background import BackgroundTask
 
 from object_store import ObjectStore, configured_object_store
+from providers.xfyun_ocr import MAX_BASE64_IMAGE_BYTES, XFYunOcrClient, XFYunOcrRejected
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
@@ -37,6 +40,7 @@ SESSION_TTL = timedelta(days=7)
 ACTIVE_ACCOUNT_LIMIT = 20
 MAX_FILE_BYTES = 20 * 1024 * 1024
 MAX_MULTIPART_OVERHEAD = 1024 * 1024
+OCR_MONTHLY_BUDGET_RMB = Decimal("80.00")
 object_store: ObjectStore = configured_object_store()
 
 
@@ -109,6 +113,17 @@ class ProfileFile(Base):
     byte_size: Mapped[int] = mapped_column(Integer)
     object_key: Mapped[str] = mapped_column(String(512), unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+
+class OcrCall(Base):
+    __tablename__ = "ocr_calls"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    request_fingerprint: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    status: Mapped[str] = mapped_column(String(16))
+    reserved_rmb: Mapped[Decimal] = mapped_column(Numeric(10, 4))
+    provider_sid: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True)
 
 
 class IdempotencyKey(Base):
@@ -186,6 +201,11 @@ class HealthRecordInput(BaseModel):
 
 class HealthRecordUpdate(HealthRecordInput):
     version: int = Field(ge=1)
+
+
+class OcrRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    confirm_provider_transfer: Literal[True]
 
 
 def get_db():
@@ -286,6 +306,23 @@ def parse_record_cursor(cursor: str) -> tuple[datetime, str]:
         return utc(datetime.fromisoformat(timestamp)), str(uuid.UUID(record_id))
     except (ValueError, TypeError, json.JSONDecodeError) as exc:
         raise HTTPException(status_code=422, detail="INVALID_CURSOR") from exc
+
+
+def xfyun_ocr_unit_price() -> Decimal | None:
+    raw = os.getenv("XFYUN_OCR_UNIT_PRICE_RMB", "").strip()
+    if not raw:
+        return None
+    try:
+        price = Decimal(raw)
+    except InvalidOperation:
+        return None
+    if not price.is_finite() or price <= 0 or price > OCR_MONTHLY_BUDGET_RMB or price.as_tuple().exponent < -4:
+        return None
+    return price
+
+
+def create_xfyun_ocr_client() -> XFYunOcrClient:
+    return XFYunOcrClient.from_environment()
 
 
 def record_request_hash(profile_id: str, payload: HealthRecordInput) -> str:
@@ -592,6 +629,112 @@ def download_profile_file(
         },
         background=BackgroundTask(body.close),
     )
+
+
+@app.post("/api/v1/files/{file_id}/ocr")
+def recognize_profile_file(
+    file_id: uuid.UUID,
+    payload: OcrRequest,
+    idempotency_key: str = Header(alias="Idempotency-Key", min_length=1, max_length=128),
+    account: Account = Depends(account_from_bearer),
+    db: Session = Depends(get_db),
+):
+    item = db.scalar(select(ProfileFile).join(Profile, Profile.id == ProfileFile.profile_id).where(
+        ProfileFile.id == str(file_id), Profile.owner_account_id == account.id,
+    ))
+    if item is None:
+        raise HTTPException(status_code=404, detail="FILE_NOT_FOUND")
+    if item.media_type not in {"image/jpeg", "image/png"}:
+        raise HTTPException(status_code=422, detail="OCR_UNSUPPORTED_FILE_TYPE")
+    if os.getenv("XFYUN_OCR_PRODUCT", "").strip() not in {"", "se75ocrbm"}:
+        raise HTTPException(status_code=503, detail="OCR_PROVIDER_UNAVAILABLE")
+
+    if not all(os.getenv(key, "").strip() for key in ("XFYUN_APP_ID", "XFYUN_API_KEY", "XFYUN_API_SECRET")):
+        raise HTTPException(status_code=503, detail="OCR_PROVIDER_UNAVAILABLE")
+    unit_price = xfyun_ocr_unit_price()
+    if unit_price is None:
+        raise HTTPException(status_code=503, detail="OCR_BILLING_UNCONFIGURED")
+
+    try:
+        source = object_store.get_object(item.object_key)
+        try:
+            image = source.read(MAX_FILE_BYTES + 1)
+        finally:
+            source.close()
+    except Exception:
+        raise HTTPException(status_code=503, detail="FILE_STORAGE_UNAVAILABLE") from None
+    if len(image) > MAX_FILE_BYTES:
+        raise HTTPException(status_code=413, detail="FILE_TOO_LARGE")
+    if hashlib.sha256(image).hexdigest() != item.sha256:
+        raise HTTPException(status_code=409, detail="FILE_INTEGRITY_ERROR")
+    if len(base64.b64encode(image)) > MAX_BASE64_IMAGE_BYTES:
+        raise HTTPException(status_code=413, detail="OCR_IMAGE_TOO_LARGE")
+
+    fingerprint = hashlib.sha256(
+        f"{account.id}:{file_id}:{idempotency_key}".encode("utf-8")
+    ).hexdigest()
+    if db.bind.dialect.name == "postgresql":
+        db.execute(text("SELECT pg_advisory_xact_lock(17002)"))
+    existing = db.scalar(select(OcrCall).where(OcrCall.request_fingerprint == fingerprint))
+    if existing is not None:
+        if existing.status == "unknown":
+            raise HTTPException(status_code=409, detail="PROVIDER_RESULT_UNKNOWN")
+        if existing.status == "reserved":
+            raise HTTPException(status_code=409, detail="OCR_IN_PROGRESS")
+        raise HTTPException(status_code=409, detail="OCR_ALREADY_COMPLETED")
+
+    shanghai = ZoneInfo("Asia/Shanghai")
+    now = datetime.now(timezone.utc)
+    month_start_local = now.astimezone(shanghai).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    if month_start_local.month == 12:
+        next_month_local = month_start_local.replace(year=month_start_local.year + 1, month=1)
+    else:
+        next_month_local = month_start_local.replace(month=month_start_local.month + 1)
+    used = db.scalar(select(func.coalesce(func.sum(OcrCall.reserved_rmb), 0)).where(or_(
+        and_(
+            OcrCall.created_at >= month_start_local.astimezone(timezone.utc),
+            OcrCall.created_at < next_month_local.astimezone(timezone.utc),
+        ),
+        OcrCall.status.in_(("reserved", "unknown")),
+    )))
+    if Decimal(str(used or 0)) + unit_price > OCR_MONTHLY_BUDGET_RMB:
+        db.rollback()
+        raise HTTPException(status_code=429, detail="BUDGET_EXCEEDED")
+
+    call = OcrCall(request_fingerprint=fingerprint, status="reserved", reserved_rmb=unit_price)
+    db.add(call)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="OCR_ALREADY_COMPLETED") from None
+    db.refresh(call)
+
+    try:
+        text_result, provider_sid = create_xfyun_ocr_client().recognize(
+            image,
+            item.media_type,
+            request_id=call.id,
+        )
+    except XFYunOcrRejected:
+        call.status = "failed"
+        db.commit()
+        raise HTTPException(status_code=502, detail="OCR_PROVIDER_REJECTED") from None
+    except Exception:
+        call.status = "unknown"
+        db.commit()
+        raise HTTPException(status_code=502, detail="PROVIDER_RESULT_UNKNOWN") from None
+
+    call.status = "succeeded"
+    call.provider_sid = provider_sid[:128]
+    db.commit()
+    return {
+        "status": "draft",
+        "file_id": str(file_id),
+        "provider": "xfyun_ocr_llm",
+        "text": text_result,
+        "requires_manual_review": True,
+    }
 
 
 @app.get("/api/v1/profiles/{profile_id}/records")

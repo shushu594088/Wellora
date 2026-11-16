@@ -8,8 +8,8 @@ if ($confirmation -cne "NEW_KEYS") {
 }
 
 $selection = (Read-Host "Provider(s): DEEPSEEK, XFYUN, or BOTH").Trim().ToUpperInvariant()
-if ($selection -notin @("DEEPSEEK", "XFYUN", "BOTH")) {
-    throw "Select DEEPSEEK, XFYUN, or BOTH. No credential was requested or sent."
+if ($selection -notin @("DEEPSEEK", "XFYUN", "BOTH", "OCR_PRICE")) {
+    throw "Select DEEPSEEK, XFYUN, BOTH, or OCR_PRICE. No credential was requested or sent."
 }
 
 $values = [ordered]@{}
@@ -32,6 +32,10 @@ if ($selection -in @("XFYUN", "BOTH")) {
     $values.XFYUN_API_SECRET = Read-SecretValue "New XFYUN API secret"
     $values.XFYUN_OCR_PRODUCT = Read-Host "XFYUN OCR product ID (optional; leave blank until confirmed)"
     $values.XFYUN_ASR_PRODUCT = Read-Host "XFYUN ASR product ID (optional; leave blank until confirmed)"
+}
+
+if ($selection -eq "OCR_PRICE") {
+    $values.XFYUN_OCR_UNIT_PRICE_RMB = Read-Host "Verified XFYUN OCR price per image in RMB (blank disables OCR)"
 }
 
 $missing = @()

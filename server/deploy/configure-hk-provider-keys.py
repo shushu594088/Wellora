@@ -4,9 +4,11 @@
 import json
 import os
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
+from decimal import Decimal, InvalidOperation
 
 ROOT = pathlib.Path("/opt/wellora-hk/server")
 ENV_FILE = ROOT / ".env"
@@ -18,6 +20,7 @@ ALLOWED = {
     "XFYUN_API_SECRET",
     "XFYUN_OCR_PRODUCT",
     "XFYUN_ASR_PRODUCT",
+    "XFYUN_OCR_UNIT_PRICE_RMB",
 }
 
 
@@ -39,6 +42,16 @@ def main() -> None:
     if any("\n" in value or "\r" in value for value in values.values()):
         raise SystemExit("Newlines are not allowed in provider settings.")
 
+    if "XFYUN_OCR_UNIT_PRICE_RMB" in values and values["XFYUN_OCR_UNIT_PRICE_RMB"].strip():
+        if not re.fullmatch(r"[0-9]+(?:\.[0-9]{1,4})?", values["XFYUN_OCR_UNIT_PRICE_RMB"].strip()):
+            raise SystemExit("OCR price must be a positive RMB amount with at most four decimals.")
+        try:
+            price = Decimal(values["XFYUN_OCR_UNIT_PRICE_RMB"].strip())
+        except InvalidOperation as exc:
+            raise SystemExit("OCR price must be a positive RMB amount.") from exc
+        if price <= 0 or price > Decimal("80.00"):
+            raise SystemExit("OCR price must be between 0 and 80 RMB per image.")
+
     deepseek_selected = "DEEPSEEK_API_KEY" in values
     if deepseek_selected and not values["DEEPSEEK_API_KEY"].strip():
         raise SystemExit("DeepSeek API key is required; no configuration was changed.")
@@ -48,7 +61,8 @@ def main() -> None:
     if xfyun_selected and not all(values.get(key, "").strip() for key in xfyun_fields):
         raise SystemExit("XFYUN App ID, API key, and API secret are required together.")
 
-    if not deepseek_selected and not xfyun_selected:
+    price_only = set(values) == {"XFYUN_OCR_UNIT_PRICE_RMB"}
+    if not deepseek_selected and not xfyun_selected and not price_only:
         raise SystemExit("Select DeepSeek and/or XFYUN credentials.")
 
     lines = ENV_FILE.read_text(encoding="utf-8").splitlines()
@@ -107,7 +121,7 @@ def main() -> None:
         raise SystemExit(result.returncode)
 
     print("Saved selected provider settings in the server-private .env and restarted only the Wellora API.")
-    print("Provider API adapters are not implemented yet; no vendor API request was made.")
+    print("Configuration updated. This script makes no vendor API request.")
 
 
 if __name__ == "__main__":

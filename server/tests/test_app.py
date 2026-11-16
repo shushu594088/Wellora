@@ -220,6 +220,202 @@ def test_private_oss_configuration_uses_server_environment(monkeypatch):
     assert store.bucket.bucket_name == "fixture-private-bucket"
 
 
+def upload_ocr_fixture(api, token, *, filename="scan.png", contents=b"\x89PNG\r\n\x1a\nfixture"):
+    headers = auth(token)
+    profile = api.post("/api/v1/profiles", json={"display_name": "OCR fixture"}, headers=headers).json()
+    response = api.post(
+        f"/api/v1/profiles/{profile['profile_id']}/files",
+        headers=headers,
+        files={"file": (filename, contents, "image/png")},
+    )
+    assert response.status_code == 201
+    return response.json()["file_id"]
+
+
+def configure_ocr(monkeypatch):
+    monkeypatch.setenv("XFYUN_APP_ID", "fixture-app")
+    monkeypatch.setenv("XFYUN_API_KEY", "fixture-key")
+    monkeypatch.setenv("XFYUN_API_SECRET", "fixture-secret")
+    monkeypatch.setenv("XFYUN_OCR_PRODUCT", "se75ocrbm")
+    monkeypatch.setenv("XFYUN_OCR_UNIT_PRICE_RMB", "0.50")
+
+
+def test_ocr_business_call_is_owned_confirmed_idempotent_and_ephemeral(client, memory_store, monkeypatch):
+    api, factory = client
+    owner = account(api, "ocr_owner")
+    other = account(api, "ocr_other")
+    file_id = upload_ocr_fixture(api, owner["access_token"])
+    configure_ocr(monkeypatch)
+
+    class FakeOcrClient:
+        calls = 0
+
+        def recognize(self, image, media_type, *, request_id=None):
+            self.calls += 1
+            assert image == b"\x89PNG\r\n\x1a\nfixture"
+            assert media_type == "image/png"
+            assert request_id
+            return "虚构检验单 OCR 草稿", "provider-fixture-sid"
+
+    provider = FakeOcrClient()
+    monkeypatch.setattr(module, "create_xfyun_ocr_client", lambda: provider)
+    url = f"/api/v1/files/{file_id}/ocr"
+    payload = {"confirm_provider_transfer": True}
+    owner_headers = {**auth(owner["access_token"]), "Idempotency-Key": "ocr-fixture-1"}
+
+    assert api.post(url, headers={"Idempotency-Key": "ocr-missing-auth"}, json=payload).status_code == 401
+    assert api.post(url, headers=auth(other["access_token"]), json=payload).status_code == 422
+    assert api.post(url, headers=owner_headers, json={"confirm_provider_transfer": False}).status_code == 422
+    assert api.post(url, headers=auth(owner["access_token"]), json=payload).status_code == 422
+    result = api.post(url, headers=owner_headers, json=payload)
+    replay = api.post(url, headers=owner_headers, json=payload)
+    assert result.status_code == 200
+    assert result.json() == {
+        "status": "draft", "file_id": file_id, "provider": "xfyun_ocr_llm",
+        "text": "虚构检验单 OCR 草稿", "requires_manual_review": True,
+    }
+    assert replay.status_code == 409
+    assert replay.json()["error"]["code"] == "OCR_ALREADY_COMPLETED"
+    assert provider.calls == 1
+    with factory() as db:
+        call = db.scalar(select(module.OcrCall))
+        assert call.status == "succeeded"
+        assert call.provider_sid == "provider-fixture-sid"
+        assert db.scalar(select(module.HealthRecord)) is None
+        assert "text" not in module.OcrCall.__table__.columns
+
+
+def test_ocr_refuses_pdf_missing_price_and_unknown_product(client, memory_store, monkeypatch):
+    api, _ = client
+    owner = account(api, "ocr_gate")
+    pdf_id = upload_ocr_fixture(api, owner["access_token"], filename="scan.pdf", contents=b"%PDF-1.7 fixture")
+    headers = {**auth(owner["access_token"]), "Idempotency-Key": "ocr-gate"}
+    configure_ocr(monkeypatch)
+    payload = {"confirm_provider_transfer": True}
+    pdf = api.post(f"/api/v1/files/{pdf_id}/ocr", headers=headers, json=payload)
+    assert pdf.status_code == 422
+    assert pdf.json()["error"]["code"] == "OCR_UNSUPPORTED_FILE_TYPE"
+
+    image_owner = account(api, "ocr_gate_image")
+    image_id = upload_ocr_fixture(api, image_owner["access_token"])
+    url = f"/api/v1/files/{image_id}/ocr"
+    headers = {**auth(image_owner["access_token"]), "Idempotency-Key": "ocr-gate"}
+    monkeypatch.delenv("XFYUN_OCR_UNIT_PRICE_RMB")
+    missing_price = api.post(url, headers=headers, json=payload)
+    assert missing_price.status_code == 503
+    assert missing_price.json()["error"]["code"] == "OCR_BILLING_UNCONFIGURED"
+    monkeypatch.setenv("XFYUN_OCR_UNIT_PRICE_RMB", "81")
+    invalid_price = api.post(url, headers=headers, json=payload)
+    assert invalid_price.status_code == 503
+    monkeypatch.setenv("XFYUN_OCR_UNIT_PRICE_RMB", "0.50")
+    monkeypatch.delenv("XFYUN_API_SECRET")
+    missing_credentials = api.post(url, headers=headers, json=payload)
+    assert missing_credentials.status_code == 503
+    assert missing_credentials.json()["error"]["code"] == "OCR_PROVIDER_UNAVAILABLE"
+    monkeypatch.setenv("XFYUN_API_SECRET", "fixture-secret")
+    monkeypatch.setenv("XFYUN_OCR_PRODUCT", "unconfirmed")
+    product_not_enabled = api.post(url, headers=headers, json=payload)
+    assert product_not_enabled.status_code == 503
+    assert product_not_enabled.json()["error"]["code"] == "OCR_PROVIDER_UNAVAILABLE"
+
+
+def test_ocr_rejects_base64_expansion_over_provider_limit_before_reservation(client, memory_store, monkeypatch):
+    api, factory = client
+    owner = account(api, "ocr_size")
+    large_image = b"\x89PNG\r\n\x1a\n" + b"x" * (3 * 1024 * 1024)
+    file_id = upload_ocr_fixture(api, owner["access_token"], contents=large_image)
+    configure_ocr(monkeypatch)
+    monkeypatch.setattr(module, "create_xfyun_ocr_client", lambda: pytest.fail("oversized image must not reach provider"))
+    response = api.post(
+        f"/api/v1/files/{file_id}/ocr",
+        headers={**auth(owner["access_token"]), "Idempotency-Key": "ocr-too-large"},
+        json={"confirm_provider_transfer": True},
+    )
+    assert response.status_code == 413
+    assert response.json()["error"]["code"] == "OCR_IMAGE_TOO_LARGE"
+    with factory() as db:
+        assert db.scalar(select(module.OcrCall)) is None
+
+
+def test_ocr_unknown_provider_outcome_keeps_reservation_and_blocks_replay(client, memory_store, monkeypatch):
+    api, factory = client
+    owner = account(api, "ocr_unknown")
+    file_id = upload_ocr_fixture(api, owner["access_token"])
+    configure_ocr(monkeypatch)
+
+    class TimeoutClient:
+        def recognize(self, *_args, **_kwargs):
+            raise TimeoutError("fixture timeout")
+
+    provider = TimeoutClient()
+    monkeypatch.setattr(module, "create_xfyun_ocr_client", lambda: provider)
+    headers = {**auth(owner["access_token"]), "Idempotency-Key": "ocr-unknown-1"}
+    url = f"/api/v1/files/{file_id}/ocr"
+    first = api.post(url, headers=headers, json={"confirm_provider_transfer": True})
+    replay = api.post(url, headers=headers, json={"confirm_provider_transfer": True})
+    assert first.status_code == 502
+    assert first.json()["error"]["code"] == "PROVIDER_RESULT_UNKNOWN"
+    assert replay.status_code == 409
+    assert replay.json()["error"]["code"] == "PROVIDER_RESULT_UNKNOWN"
+    with factory() as db:
+        call = db.scalar(select(module.OcrCall))
+        assert call.status == "unknown"
+        assert call.reserved_rmb == module.Decimal("0.50")
+
+
+def test_ocr_definite_provider_rejection_is_not_retried(client, memory_store, monkeypatch):
+    api, factory = client
+    owner = account(api, "ocr_rejected")
+    file_id = upload_ocr_fixture(api, owner["access_token"])
+    configure_ocr(monkeypatch)
+
+    class RejectedClient:
+        calls = 0
+
+        def recognize(self, *_args, **_kwargs):
+            self.calls += 1
+            raise module.XFYunOcrRejected("fixture rejection")
+
+    provider = RejectedClient()
+    monkeypatch.setattr(module, "create_xfyun_ocr_client", lambda: provider)
+    headers = {**auth(owner["access_token"]), "Idempotency-Key": "ocr-rejected-1"}
+    url = f"/api/v1/files/{file_id}/ocr"
+    payload = {"confirm_provider_transfer": True}
+    first = api.post(url, headers=headers, json=payload)
+    replay = api.post(url, headers=headers, json=payload)
+    assert first.status_code == 502
+    assert first.json()["error"]["code"] == "OCR_PROVIDER_REJECTED"
+    assert replay.status_code == 409
+    assert replay.json()["error"]["code"] == "OCR_ALREADY_COMPLETED"
+    assert provider.calls == 1
+    with factory() as db:
+        assert db.scalar(select(module.OcrCall)).status == "failed"
+
+
+def test_ocr_monthly_cap_counts_unresolved_reservations_from_prior_month(client, memory_store, monkeypatch):
+    api, factory = client
+    owner = account(api, "ocr_budget")
+    file_id = upload_ocr_fixture(api, owner["access_token"])
+    configure_ocr(monkeypatch)
+    monkeypatch.setenv("XFYUN_OCR_UNIT_PRICE_RMB", "1")
+    with factory() as db:
+        db.add(module.OcrCall(
+            request_fingerprint="a" * 64,
+            status="unknown",
+            reserved_rmb=module.Decimal("79.50"),
+            created_at=datetime.now(timezone.utc) - timedelta(days=40),
+        ))
+        db.commit()
+    monkeypatch.setattr(module, "create_xfyun_ocr_client", lambda: pytest.fail("budget must block provider call"))
+    result = api.post(
+        f"/api/v1/files/{file_id}/ocr",
+        headers={**auth(owner["access_token"]), "Idempotency-Key": "ocr-budget-1"},
+        json={"confirm_provider_transfer": True},
+    )
+    assert result.status_code == 429
+    assert result.json()["error"]["code"] == "BUDGET_EXCEEDED"
+
+
 def test_invalid_registration_does_not_echo_password(client):
     api, _ = client
     for username, password in [("有中文", PASSWORD), ("valid_name", "short"), ("valid_name", "x" * 129)]:

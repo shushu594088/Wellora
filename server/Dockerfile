@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir uv==0.12.19
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY app.py object_store.py alembic.ini ./
+COPY providers ./providers
 COPY migrations ./migrations
 RUN chmod -R a+rX /app/migrations
 COPY tests/deployment_smoke.py ./

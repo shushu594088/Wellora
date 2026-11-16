@@ -8,7 +8,7 @@ Requires Python 3.12 and `uv` 0.12.19 or later. PowerShell:
 
 ```powershell
 uv sync --locked --group dev --default-index https://pypi.org/simple
-uv run --no-sync pytest -q
+uv run --no-sync python -m pytest -q
 ```
 
 Tests use a fresh in-memory SQLite database. They do not verify PostgreSQL or deployment behavior.
@@ -82,3 +82,6 @@ P023 follow-up: the installer completed with masked local prompts and initialize
 ## P024 provider credentials
 
 From the repository root, run `powershell -ExecutionPolicy Bypass -File .\server\deploy\configure-hk-provider-keys.ps1`. Select `DEEPSEEK`, `XFYUN`, or `BOTH`, then enter freshly issued values only in the local masked prompts. Values travel over SSH stdin to the root-owned helper, are written to the server-private `.env` (0600), and only the Wellora API is recreated. Do not use a credential previously posted in chat. This stores configuration only; provider clients and vendor API requests are not implemented. Confirm model/product IDs, pricing, quotas, request formats and retention before actual provider integration.
+## P025 fictional-data OCR API
+
+`POST /api/v1/files/{file_id}/ocr` sends a user-confirmed, owned JPG/JPEG/PNG to XFYUN general OCR LLM and returns an unpersisted draft text requiring manual review. PDFs are not supported by this image endpoint. The request is authenticated and idempotent; it never writes a health record or automatically retries uncertain provider outcomes. The API refuses calls until valid provider credentials, `XFYUN_OCR_PRODUCT` (blank or `se75ocrbm`), and `XFYUN_OCR_UNIT_PRICE_RMB` are configured. Verify actual account pricing before setting the price. The app reserves one image's configured price against the RMB 80 OCR monthly cap before sending; unresolved reservations continue to count across months. Never use real health files until transfer/retention compliance is reviewed. Use fictional data only. See `evidence/transactions/P025-xfyun-ocr/VERIFICATION.txt`.
