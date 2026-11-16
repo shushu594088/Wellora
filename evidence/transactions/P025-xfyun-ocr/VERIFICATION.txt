@@ -2,8 +2,8 @@ P025 transaction verification — 2026-11-16 (Asia/Shanghai)
 
 TARGET / scope
 - Product target: server/app.py POST /api/v1/files/{file_id}/ocr, with the XFYUN image OCR client in server/providers/xfyun_ocr.py.
-- The original tracked server/app.py bytes are preserved in BASELINE_FILE.py. SHA-256 equals `git show HEAD:server/app.py` exactly.
-- MODIFIED_FILE.py is a byte-for-byte copy of the working server/app.py at final verification. DIFF_FILE.patch is a unified patch that reconstructs it from BASELINE_FILE.py. ROLLBACK.sh restores a target copy from its sibling baseline.
+- BASELINE_FILE.py SHA-256 equals the pre-P025 tracked source `git show f8a17e1b48564016182f1da1ae867a93664676f2^:server/app.py` exactly (`a3f1cd964520e6ea2135af64468360bbf3fa89525ca89fe1a8d848b18e672fde`).
+- MODIFIED_FILE.py SHA-256 equals the P025 implementation commit `git show f8a17e1b48564016182f1da1ae867a93664676f2:server/app.py` exactly (`c8998c6ff95a3b21265a82f43c9a72c660e51890d91441d063843085073a972f`). DIFF_FILE.patch reconstructs it from BASELINE_FILE.py. ROLLBACK.sh restores a target copy from its sibling baseline.
 - Client reference: https://www.xfyun.cn/doc/words/OCRforLLM/API.html and official example https://github.com/iFLYTEK-OP/websdk-python-demo. The SDK signature source uses HMAC-SHA256 over host/date/request-line, then base64 authorization query values; the implementation follows that format and does not copy SDK source.
 
 Role paths (reopened)
@@ -65,3 +65,30 @@ Actual provider / deployment boundary
 - No real XFYUN credentials were loaded or used; no XFYUN network request was made. All API client traffic was intercepted by httpx.MockTransport or a fake business client. Account product authorization, current price, billing, retention/transfer terms, and live provider response remain unverified.
 - OCR route returns only a temporary draft requiring manual review; no OCR text field exists in the database, and test checks confirm no HealthRecord write. Unknown provider outcomes retain the reservation and block replay. The per-OCR cap is RMB 80/month; unresolved reservations continue to count across months.
 - Real call remains fail-closed until credentials and verified per-image price are configured. Do not test with real health records before retention/cross-border review. P025 source and migration were not deployed because the Docker engine was unavailable locally and the server SSH connection closed.
+
+P025 live provider follow-up — 2026-11-16 (Asia/Shanghai)
+
+User follow-up: “不需要考虑预算，直接进行测试”。A real paid provider test was authorized; only a locally generated synthetic PNG was sent. No health record or user document was used.
+
+Fixture and provider result
+- Fixture: 1200 x 500 PNG generated locally with fictional text only (`FICTIONAL OCR TEST ONLY`, `Ada Example`, `2026-11-16`, `TEST-0042`, `123`); SHA-256 `43daf174640dfc7b25d6ff66b3430b8efb8c4f427d59a256b19702a3dd53b25e`.
+- Literal steps: `scp server/providers/xfyun_ocr.py server1:/tmp/wellora-p025-xfyun-ocr.py`; `scp evidence/transactions/P025-xfyun-ocr/FIXTURE.png server1:/tmp/wellora-p025-fixture.png`; `scp evidence/transactions/P025-xfyun-ocr/live_probe.py server1:/tmp/wellora-p025-live-probe.py`; then `ssh server1 'sudo -n docker exec wellora-hk-api-1 mkdir -p /tmp/wellora-probe && sudo -n docker cp /tmp/wellora-p025-xfyun-ocr.py wellora-hk-api-1:/tmp/wellora-probe/xfyun_ocr.py && sudo -n docker cp /tmp/wellora-p025-fixture.png wellora-hk-api-1:/tmp/wellora-probe/fixture.png && sudo -n docker cp /tmp/wellora-p025-live-probe.py wellora-hk-api-1:/tmp/wellora-probe/live_probe.py && sudo -n docker exec wellora-hk-api-1 python /tmp/wellora-probe/live_probe.py'`. Final run stdout is preserved verbatim in `live_provider_stdout.txt`; stderr was empty (0 bytes); exit status 0. `live_provider_summary.json` repeats only HTTP status, SID-presence boolean, and recognized Markdown; provider session ID and verbose response layout are intentionally omitted.
+- Read-only environment check in `wellora-hk-api-1` found XFYUN credential fields present; values were never displayed. `XFYUN_OCR_UNIT_PRICE_RMB` and `XFYUN_OCR_PRODUCT` were unset. Remote API source hash was the baseline `a3f1cd964520e6ea2135af64468360bbf3fa89525ca89fe1a8d848b18e672fde`; P025 code/migration were not deployed.
+- The deployed image predates P025 and lacks `httpx` (`ModuleNotFoundError`); it also runs without pip. Therefore the live probe injected a small Python-stdlib `urllib` transport shim into the exact checked-in `XFYunOcrClient` process. The real P025 client still generated the signed URL/body and parsed the actual provider response; only HTTP transport was substituted. This verifies a real provider request and actual OCR response, but does not verify production `httpx` transport or the live business route.
+- Three live requests using the same synthetic image returned HTTP 200 with a provider session ID. The decoded Markdown exactly read:
+  `FICTIONAL OCR TEST ONLY\n\nName: Ada Example\n\nDate: 2026-11-16\n\nDocument No:TEST-0042\n\nTest value: 123\n\n`
+  No provider session ID, credential, signature, or health data is retained in evidence. The sanitized stdout is `live_provider_stdout.txt`; `live_provider_summary.json` repeats that minimal summary; `live_probe.py` documents the probe. The provider's current charge was not retrieved.
+- Temporary test module/image/script were copied to `/tmp/wellora-probe` inside the API container, then removed. No service restart or production database write occurred. The API container stayed Up and `https://api.shushu520.top/api/v1/health` returned `{"status":"ok"}`.
+
+Corrected setup errors (not hidden)
+- `scp` invocation first used PowerShell `Join-Path` with an SSH host path and exited 1; retried with literal `server1:/tmp/...` paths.
+- Initial `docker cp` target `/probe` did not exist; rootless container user could not create `/probe`; created writable `/tmp/wellora-probe` instead. The first probe run then failed because its fixture path still pointed at `/probe`; corrected all paths and reran successfully.
+- Attempt to import `httpx` in the deployed container failed because P025 runtime dependencies were not deployed. Used the stdlib transport shim described above; did not install packages or change the running service.
+- After the third live call returned and stdout was already written to file, a PowerShell display step exited 1 because it passed null (empty stderr stream) to `Encoding.GetByteCount`. The corrected readback treated empty stderr as 0 bytes, verified the captured HTTP 200/success JSON, and did not repeat the provider call.
+
+Repeated four-role behavioral verification (same fixture/input)
+- A `git add` call was first issued from `server/` with repository-root-relative paths; Git exited 128 (`pathspec evidence/prompts/P025.md did not match any files`). The tests still ran and passed. The exact target paths were then staged from the repository root; no broad staging was used.
+- Command from `server/`: `C:\Users\Administrator\Desktop\Wellora\server\.venv\Scripts\python.exe ..\evidence\transactions\P025-xfyun-ocr\route_probe.py ..\evidence\transactions\P025-xfyun-ocr\BASELINE_FILE.py` (substitute `MODIFIED_FILE.py` / `ROLLBACK_COPY.py` for the other roles). BASELINE stdout `{"status_code":404,"body":{"error":"Not Found"},"provider_calls":0}`, exit 0; expected StarletteDeprecationWarning on stderr.
+- MODIFIED: same command with `MODIFIED_FILE.py` -> stdout `{"status_code":200,"body":{"status":"draft","provider":"xfyun_ocr_llm","text":"Fixture OCR draft","requires_manual_review":true},"provider_calls":1}`, exit 0; same warning.
+- ROLLBACK: copied MODIFIED_FILE, ran executable `ROLLBACK.sh`, then the same route probe -> baseline 404 / zero provider calls, exit 0; rollback copy SHA equals BASELINE SHA `a3f1cd964520e6ea2135af64468360bbf3fa89525ca89fe1a8d848b18e672fde`. The temporary rollback copy was removed; MODIFIED_FILE stayed unchanged.
+- Live provider use is distinct from the mocked route probe above. The production OCR business route remains undeployed and fail-closed because the unit-price variable is unset. No rate was guessed or inserted, and no production OCR call was made through that route.

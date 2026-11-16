@@ -1,0 +1,6 @@
+{
+  "http_status": 200,
+  "status": "success",
+  "sid_present": true,
+  "markdown": "FICTIONAL OCR TEST ONLY\n\nName: Ada Example\n\nDate: 2026-11-16\n\nDocument No:TEST-0042\n\nTest value: 123\n\n"
+}
