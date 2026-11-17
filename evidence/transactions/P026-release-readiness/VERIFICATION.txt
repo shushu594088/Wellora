@@ -1,0 +1,67 @@
+P026 项目上线就绪与线上状态验证
+日期：2026-11-17（Asia/Shanghai）
+
+目标
+- 完成香港 Wellora API 线上状态核对。
+- 修复 release lint 阻断后，生成 Android release AAB/APK 候选并执行本机、模拟器和服务器检查。
+- 不上传应用商店、不生成或保存签名密钥；只记录可复验结果。
+
+TARGET 与最小修改
+- TARGET：C:\Users\Administrator\Desktop\Wellora\app\src\main\java\com\nmy\wellora\ui\feature\shared\DemoUi.kt
+- GOAL：将 PageColumn 中未使用约束的 BoxWithConstraints 替换为 Box；ResponsiveTwoColumn 仍保留 BoxWithConstraints。
+- MODIFIED SHA-256：d63e124274ddb40445524f82e08eb08b8b073116407a273484c197c00411e994
+- MODIFIED bytes：13185
+- 原始工作区中存在其他未提交 Android/UI 改动，本轮未暂存或改写。
+
+四角色
+- BASELINE_FILE：C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P026-release-readiness\BASELINE_FILE.kt
+  SHA-256 eda15bbd23a98c1a4bd95b43fed07401fe82f57f43ba4c4feb24b1be893a244a
+- MODIFIED_FILE：C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P026-release-readiness\MODIFIED_FILE.kt
+  SHA-256 d63e124274ddb40445524f82e08eb08b8b073116407a273484c197c00411e994
+- DIFF_FILE：C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P026-release-readiness\DIFF_FILE.patch
+  SHA-256 f6b0d1ab1fa0ab48f75348085351a32c9064175c28d7f6b59344b37ecc64f542
+- VERIFICATION：C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P026-release-readiness\VERIFICATION.txt
+- ROLLBACK：C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P026-release-readiness\ROLLBACK.sh
+  SHA-256 7934a189e36a26dfcea5b94cda452db22338f8c5da40fc3818a3576ffcfe8201
+
+同输入事务结果
+- 命令：powershell -ExecutionPolicy Bypass -File C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P026-release-readiness\run-role-probe.ps1
+- BASELINE：release lint exit 1；UnusedBoxWithConstraintsScope。
+- MODIFIED：release lint exit 0。
+- ROLLBACK：ROLLBACK.sh exit 0，复制文件 SHA 等于 BASELINE；相同 release lint exit 1。
+- 结束状态：TARGET 恢复为 MODIFIED SHA；补丁从 BASELINE 重建 MODIFIED 的 SHA 校验通过。
+- 字面日志：baseline-lint.stdout.txt、baseline-lint.stderr.txt、modified-lint.stdout.txt、modified-lint.stderr.txt、rollback-lint.stdout.txt、rollback-lint.stderr.txt、ROLE_SUMMARY.txt。
+
+Android 发布候选
+- 命令：.\gradlew.bat :app:testDebugUnitTest :app:lintRelease :app:bundleRelease :app:assembleRelease :app:assembleDebug -PwelloraApiBaseUrl=https://api.shushu520.top --console=plain
+- 结果：BUILD SUCCESSFUL。
+- release lint：0 errors, 15 warnings, 2 hints。
+- 单元测试：Gradle task completed successfully。
+- AAB：C:\Users\Administrator\Desktop\Wellora\app\build\outputs\bundle\release\app-release.aab；3470849 bytes；SHA-256 9af2af5ae1c3dfe8a9f9968bd6a02786a821ec7c0034ca9c9ddb5eb03ab05294。
+- APK：C:\Users\Administrator\Desktop\Wellora\app\build\outputs\apk\release\app-release-unsigned.apk；1537003 bytes；SHA-256 26e00975c91bcea40c40715277367f28c43f1732273dcc37155290dcff446881。
+- 版本：applicationId com.nmy.wellora，versionCode 1，versionName 1.0。
+- 签名：release AAB/APK 为 unsigned；仓库没有发布 keystore，未伪造签名或上传商店。
+
+Android 模拟器
+- 首次未带 opt-in 的 connectedDebugAndroidTest：12 tests，其中 2 个因显式 serverTest 假设未满足而失败；这不是代码失败。
+- 带参数命令：.\gradlew.bat :app:connectedDebugAndroidTest -PwelloraApiBaseUrl=https://api.shushu520.top "-Pandroid.testInstrumentationRunnerArguments.wellora.serverTest=true" --console=plain
+- 结果：BUILD SUCCESSFUL；Medium_Phone_API_37.0；12 tests，0 failures，0 errors，0 skipped。
+- 报告：C:\Users\Administrator\Desktop\Wellora\app\build\outputs\androidTest-results\connected\debug\TEST-Medium_Phone_API_37.0(AVD) - 17.xml。
+- 服务器测试产生的 3 个 android18_ 虚构账号已按固定前缀限定删除；删除后 accounts/profiles/sessions 均为 0。
+
+香港服务器线上结果
+- SSH alias：server1；Compose 项目 wellora-hk。
+- API 容器：wellora-hk-api-1，状态 Up；DB：wellora-hk-db-1，healthy。
+- Alembic：0004 (head)。
+- 公网健康：https://api.shushu520.top/api/v1/health -> HTTP 200，{"status":"ok"}。
+- HTTP -> HTTPS：308 Permanent Redirect。
+- TLS：Let's Encrypt，CN=api.shushu520.top，当前证书有效期 2026-11-14 至 2027-02-12。
+- API 宿主机绑定：127.0.0.1:8010；数据库无公开容器端口；临时 Quick Tunnel 不存在。
+- 私有 .env：0600 root:root；OSS 与 XFYUN 配置只核对存在性，值未读取或输出。
+- 磁盘：根分区约 42% 使用率（只读观测）。
+- API 健康复核后，业务表清理为 accounts/profiles/sessions=0；本轮只使用虚构数据。
+
+上线边界
+- 后端 API 已在线，正式域名 HTTPS 可访问。
+- Android 当前交付的是未签名 release 构建候选；没有发布 keystore、Google Play/App Store 账号或用户明确的商店上传授权，因此不能声称应用商店正式发布。
+- 真实健康资料仍不可使用：OCR 试用剩余额度／期限、供应商留存、跨境处理、OSS 服务端加密／生命周期等仍需核实；医学风险／药品安全能力仍未启用。

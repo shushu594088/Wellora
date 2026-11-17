@@ -1,0 +1,18 @@
+{
+  "source": {
+    "path": "C:\\Users\\Administrator\\Desktop\\Wellora\\app\\src\\main\\java\\com\\nmy\\wellora\\ui\\feature\\shared\\DemoUi.kt",
+    "sha256": "d63e124274ddb40445524f82e08eb08b8b073116407a273484c197c00411e994",
+    "bytes": 13185
+  },
+  "aab": {
+    "path": "C:\\Users\\Administrator\\Desktop\\Wellora\\app\\build\\outputs\\bundle\\release\\app-release.aab",
+    "sha256": "9af2af5ae1c3dfe8a9f9968bd6a02786a821ec7c0034ca9c9ddb5eb03ab05294",
+    "bytes": 3470849
+  },
+  "unsigned_apk": {
+    "path": "C:\\Users\\Administrator\\Desktop\\Wellora\\app\\build\\outputs\\apk\\release\\app-release-unsigned.apk",
+    "sha256": "26e00975c91bcea40c40715277367f28c43f1732273dcc37155290dcff446881",
+    "bytes": 1537003
+  },
+  "android_report": "C:\\Users\\Administrator\\Desktop\\Wellora\\app\\build\\outputs\\androidTest-results\\connected\\debug\\TEST-Medium_Phone_API_37.0(AVD) - 17.xml"
+}

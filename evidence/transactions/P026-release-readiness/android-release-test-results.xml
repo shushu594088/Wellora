@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="12" failures="0" errors="0" skipped="0" time="0.000" timestamp="2026-11-17T01:59:16" hostname="localhost">
+  <testsuite name="com.nmy.wellora.AccountServerTest" tests="3" failures="0" errors="0" skipped="0" time="15.245" timestamp="2026-11-17T01:59:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="realApiChecksErrorsIsolationConflictAndEncryptedSession" classname="com.nmy.wellora.AccountServerTest" time="6.447" />
+    <testcase name="nativeAccountFormRegistersSavesReloadsAndLogsOut" classname="com.nmy.wellora.AccountServerTest" time="7.750" />
+    <testcase name="debugCleartextIsLimitedToTestHosts" classname="com.nmy.wellora.AccountServerTest" time="1.048" />
+  </testsuite>
+  <testsuite name="com.nmy.wellora.ExampleInstrumentedTest" tests="1" failures="0" errors="0" skipped="0" time="0.003" timestamp="2026-11-17T01:59:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="useAppContext" classname="com.nmy.wellora.ExampleInstrumentedTest" time="0.003" />
+  </testsuite>
+  <testsuite name="com.nmy.wellora.NativeHomeScreenTest" tests="8" failures="0" errors="0" skipped="0" time="11.798" timestamp="2026-11-17T01:59:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="uploadRouteShowsNativeVirtualFlow" classname="com.nmy.wellora.NativeHomeScreenTest" time="1.363" />
+    <testcase name="conversationModeKeepsVoiceAndDraftSendActions" classname="com.nmy.wellora.NativeHomeScreenTest" time="2.378" />
+    <testcase name="loginAndRegistrationUseSeparatePages" classname="com.nmy.wellora.NativeHomeScreenTest" time="1.919" />
+    <testcase name="consultationKeepsOriginalContentAndInputModes" classname="com.nmy.wellora.NativeHomeScreenTest" time="1.367" />
+    <testcase name="homeShowsNativePrototypeContent" classname="com.nmy.wellora.NativeHomeScreenTest" time="1.086" />
+    <testcase name="elderModeToggleUpdatesItsLabel" classname="com.nmy.wellora.NativeHomeScreenTest" time="1.135" />
+    <testcase name="recordsRouteShowsVirtualProfile" classname="com.nmy.wellora.NativeHomeScreenTest" time="1.193" />
+    <testcase name="consultationConversationModeCanStartAndEndWithoutChangingLayout" classname="com.nmy.wellora.NativeHomeScreenTest" time="1.357" />
+  </testsuite>
+</testsuites>
