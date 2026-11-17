@@ -1,0 +1,8 @@
+--- a/server/app.py
++++ b/server/app.py
+@@ -378,0 +379,5 @@
++
++
++@app.get("/")
++def service_root():
++    return {"service": "Wellora API", "status": "ok", "health": "/api/v1/health"}

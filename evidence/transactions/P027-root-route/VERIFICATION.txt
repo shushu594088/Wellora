@@ -1,0 +1,44 @@
+P027 根路径服务说明与香港线上部署验证
+日期：2026-11-17（Asia/Shanghai）
+
+用户观察
+- `https://api.shushu520.top/` 原先返回 HTTP 404 `{"detail":"Not Found"}`。
+- 原因：服务只注册 `/api/v1/health` 和业务 API，没有根路径处理器；HTTPS、Nginx 与 API 健康接口本身正常。
+
+TARGET / GOAL
+- TARGET：server/app.py
+- GOAL：增加公开 `GET /`，只返回服务名称、状态和健康检查相对路径；不返回版本、配置、数据库或凭据。
+- MODIFIED source SHA-256：f63681900896f77a7feb300103ac377b55543f3b724c2437c84b3fd79c42ae9e
+
+四角色（已重新打开）
+- BASELINE_FILE.py：C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P027-root-route\BASELINE_FILE.py
+  SHA-256 2b06b536449abdd73f4e6d764b17e4b5403de9f95bf247fd39bcd41fa90e449c
+- MODIFIED_FILE.py：C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P027-root-route\MODIFIED_FILE.py
+  SHA-256 f63681900896f77a7feb300103ac377b55543f3b724c2437c84b3fd79c42ae9e
+- DIFF_FILE.patch：C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P027-root-route\DIFF_FILE.patch
+  SHA-256 246840d46a999681efe2ec85fc43769a412b1096eb413cd29fcc5d1dada3436d
+- VERIFICATION.txt：C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P027-root-route\VERIFICATION.txt
+- ROLLBACK.sh：C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P027-root-route\ROLLBACK.sh
+  SHA-256 9138c974100d04c2e3ff2b10c1ab5001df18e0fd16b37a8687c9c475f3cb9ccf
+
+同输入行为探针
+- 命令：server/.venv/Scripts/python.exe evidence/transactions/P027-root-route/root_probe.py <source>
+- BASELINE stdout：`{'status_code': 404, 'body': {'detail': 'Not Found'}}`，exit 0。
+- MODIFIED stdout：`{'status_code': 200, 'body': {'service': 'Wellora API', 'status': 'ok', 'health': '/api/v1/health'}}`，exit 0。
+- ROLLBACK.sh exit 0；ROLLBACK_COPY.py SHA 等于 BASELINE；同一探针 stdout 回到 BASELINE 404，exit 0。
+- DIFF_FILE.patch 在隔离目录重建 MODIFIED，SHA 等于 MODIFIED。
+- 本机 `cd server; uv run --no-sync python -m pytest -q`：49 passed，1 条既有 Starlette/httpx 弃用警告；`python -m py_compile server/app.py` 通过。
+
+部署过程与修正
+- 先将远端 `/opt/wellora-hk/server/app.py` 备份至 `/opt/wellora/backups/P027-root-route-20261117/app.py.baseline`。
+- 备份 SHA-256：2b06b536449abdd73f4e6d764b17e4b5403de9f95bf247fd39bcd41fa90e449c。
+- 第一次重建误用了基础 compose 文件，API 未绑定 127.0.0.1:8010，Nginx 上游短暂返回 502；读取日志确认应用实际启动，未改数据库卷或环境值。
+- 使用正确的双文件组合重新部署：`docker-compose.yml` + `docker-compose.hk.yml`；API 恢复 `127.0.0.1:8010:8000`。
+
+线上最终结果
+- `GET https://api.shushu520.top/` -> HTTP 200 `{"service":"Wellora API","status":"ok","health":"/api/v1/health"}`。
+- `GET https://api.shushu520.top/api/v1/health` -> HTTP 200 `{"status":"ok"}`。
+- HTTP 根路径仍 308 跳转 HTTPS。
+- API 容器 app.py SHA-256：f63681900896f77a7feb300103ac377b55543f3b724c2437c84b3fd79c42ae9e。
+- Alembic：0004 (head)；`.env`：0600 root:root；accounts/profiles/sessions：0/0/0。
+- 临时 Quick Tunnel 未启用；API 仍只绑定回环端口，数据库无公开宿主机端口。

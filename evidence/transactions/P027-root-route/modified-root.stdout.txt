@@ -1,0 +1,1 @@
+{'status_code': 200, 'body': {'service': 'Wellora API', 'status': 'ok', 'health': '/api/v1/health'}}

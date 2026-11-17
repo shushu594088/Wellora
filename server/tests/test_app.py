@@ -58,6 +58,17 @@ def auth(token):
     return {"Authorization": f"Bearer {token}"}
 
 
+def test_public_root_describes_api(client):
+    api, _ = client
+    response = api.get("/")
+    assert response.status_code == 200
+    assert response.json() == {
+        "service": "Wellora API",
+        "status": "ok",
+        "health": "/api/v1/health",
+    }
+
+
 class MemoryObjectStore:
     def __init__(self):
         self.objects = {}

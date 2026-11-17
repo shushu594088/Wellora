@@ -378,6 +378,11 @@ async def invalid_input(request: Request, exc: RequestValidationError):
     }})
 
 
+@app.get("/")
+def service_root():
+    return {"service": "Wellora API", "status": "ok", "health": "/api/v1/health"}
+
+
 @app.get("/api/v1/health")
 def health(db: Session = Depends(get_db)):
     try:
