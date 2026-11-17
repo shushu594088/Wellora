@@ -1,0 +1,6 @@
+--- a/local.properties
++++ b/local.properties
+@@ -10,2 +10,2 @@
+ sdk.dir=D\:\\development\\Android\\sdk
+-wellora.apiBaseUrl=http://127.0.0.1:8000
++wellora.apiBaseUrl=https://api.shushu520.top

@@ -1,0 +1,39 @@
+P028 Android Studio Debug API 基址修复
+日期：2026-11-17（Asia/Shanghai）
+
+问题
+- Android Studio Debug 登录显示“连接失败，请检查网络”。
+- `local.properties` 的 `wellora.apiBaseUrl` 原为 `http://127.0.0.1:8000`。
+- Android 模拟器内的 127.0.0.1 指向模拟器自身，不是香港服务器，因此请求无法到达 API。
+
+修复
+- 将未跟踪的本机配置改为 `wellora.apiBaseUrl=https://api.shushu520.top`。
+- 未写入凭据，未提交 `local.properties`。
+- API 业务代码不变；请求仍使用 `/api/v1/auth/login`。
+
+四角色（已重新打开）
+- BASELINE_FILE.properties：C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P028-android-debug-base\BASELINE_FILE.properties
+  SHA-256 9478ebdd5e54e4df61076a0a95ab6dc0afad854fc7889f24411bf21be2629f26
+- MODIFIED_FILE.properties：C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P028-android-debug-base\MODIFIED_FILE.properties
+  SHA-256 cace114769220514b777b4ffc5bb88bf9a542b78dc94de67acba43dcf5a33502
+- DIFF_FILE.patch：C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P028-android-debug-base\DIFF_FILE.patch
+  SHA-256 7bbb18b27e83e2f682c051207243e1775f1065217d85ef149d11b3f7d1b34148
+- VERIFICATION.txt：C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P028-android-debug-base\VERIFICATION.txt
+- ROLLBACK.sh：C:\Users\Administrator\Desktop\Wellora\evidence\transactions\P028-android-debug-base\ROLLBACK.sh
+  SHA-256 03e0ff1880f79866463bc798241cdf1d6e344f0a5106a844c8d3c128f69c4530
+
+同输入结果
+- BASELINE：Gradle BuildConfig `API_BASE_URL = "http://127.0.0.1:8000"`，exit 0。
+- MODIFIED：Gradle BuildConfig `API_BASE_URL = "https://api.shushu520.top"`，exit 0。
+- ROLLBACK：ROLLBACK.sh exit 0；BuildConfig 恢复为 `http://127.0.0.1:8000`，exit 0。
+- 探针结束后工作区 local.properties 恢复为 MODIFIED HTTPS 值。
+
+验证
+- `Invoke-WebRequest https://api.shushu520.top/api/v1/health`：HTTP 200，`{"status":"ok"}`。
+- `.\gradlew.bat :app:generateDebugBuildConfig :app:testDebugUnitTest :app:assembleDebug --console=plain`：BUILD SUCCESSFUL。
+- `.\gradlew.bat :app:connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.wellora.serverTest=true" --console=plain`：BUILD SUCCESSFUL；Medium Phone API 37，12 tests，0 failures，0 errors，0 skipped。
+- 测试后限定清理服务器 `android18_` 虚构账号：3 个账号移除；accounts/profiles/sessions=0。
+
+结论
+- Android Studio 重新 Sync Project/Build 后，Debug 登录请求将发送到正式 HTTPS API，不再使用本机 127.0.0.1。
+- 如果 Android Studio 当前仍运行旧 APK，需要先卸载旧 APK 或重新 Run/Install；旧 APK 内的 BuildConfig 不会自动更新。

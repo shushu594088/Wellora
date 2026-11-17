@@ -1,0 +1,8 @@
+Calculating task graph as configuration cache cannot be reused because properties file C:\Users\Administrator\Desktop\Wellora\local.properties has changed.
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugBuildConfig
+
+BUILD SUCCESSFUL in 828ms
+1 actionable task: 1 executed
+Configuration cache entry stored.
